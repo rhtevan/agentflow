@@ -2,17 +2,17 @@
 # Shows all completed and running task instances with their outputs.
 # Run after the engine finishes to see the full execution trail.
 
-PREFIX sbpmn:  <http://example.org/ontology/sbpmn#>
+PREFIX sbpmn:  <https://sBPMN.github.io/2.0/properties#>
 PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT ?taskInst ?taskLabel ?status ?startTime ?endTime ?output WHERE {
   GRAPH <http://example.org/graphs/runtime> {
-    ?taskInst a sbpmn:TaskInstance ;
-              sbpmn:instantiatesTask ?taskDef ;
-              sbpmn:taskStatus ?status .
-    OPTIONAL { ?taskInst sbpmn:startTime ?startTime }
-    OPTIONAL { ?taskInst sbpmn:endTime ?endTime }
-    OPTIONAL { ?taskInst sbpmn:taskOutput ?output }
+    ?taskInst a agentflow:TaskInstance ;
+              agentflow:instantiatesTask ?taskDef ;
+              agentflow:taskStatus ?status .
+    OPTIONAL { ?taskInst agentflow:startTime ?startTime }
+    OPTIONAL { ?taskInst agentflow:endTime ?endTime }
+    OPTIONAL { ?taskInst agentflow:taskOutput ?output }
   }
   GRAPH <http://example.org/graphs/definitions> {
     OPTIONAL { ?taskDef rdfs:label ?taskLabel }

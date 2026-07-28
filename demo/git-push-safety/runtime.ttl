@@ -1,5 +1,5 @@
-@prefix sbpmn:     <http://example.org/ontology/sbpmn#> .
-@prefix sbpmnc:    <http://example.org/ontology/sbpmnc#> .
+@prefix sbpmn:     <https://sBPMN.github.io/2.0/properties#> .
+@prefix sbpmnc:    <https://sBPMN.github.io/2.0/classes#> .
 @prefix agentflow: <http://example.org/ontology/agentflow#> .
 @prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:        <http://example.org/instances/> .
@@ -14,29 +14,29 @@
 
 # ── Process Instance ──────────────────────────────────────
 
-ex:ProcInst_GitPush_001 a sbpmn:ProcessInstance ;
-    sbpmn:instantiatesProcess ex:ProcDef_GitPushSafety ;
-    sbpmn:processStatus "RUNNING" ;
-    sbpmn:currentTask ex:TaskInst_Start_GitPush ;
-    sbpmn:hasVariable ex:Var_WorkDir, ex:Var_Remote, ex:Var_Branch .
+ex:ProcInst_GitPush_001 a agentflow:ProcessInstance ;
+    agentflow:instantiatesProcess ex:ProcDef_GitPushSafety ;
+    agentflow:processStatus "RUNNING" ;
+    agentflow:currentTask ex:TaskInst_Start_GitPush ;
+    agentflow:hasVariable ex:Var_WorkDir, ex:Var_Remote, ex:Var_Branch .
 
 # ── Initial Task Instance (at StartEvent) ─────────────────
 
-ex:TaskInst_Start_GitPush a sbpmn:TaskInstance ;
-    sbpmn:instantiatesTask ex:Start_GitPush ;
-    sbpmn:taskStatus "RUNNING" ;
-    sbpmn:startTime "2026-07-28T15:00:00Z"^^xsd:dateTime .
+ex:TaskInst_Start_GitPush a agentflow:TaskInstance ;
+    agentflow:instantiatesTask ex:Start_GitPush ;
+    agentflow:taskStatus "RUNNING" ;
+    agentflow:startTime "2026-07-28T15:00:00Z"^^xsd:dateTime .
 
 # ── Process Variables (Object Under Process: Git Repo) ────
 
-ex:Var_WorkDir a sbpmn:ProcessVariable ;
-    sbpmn:varName "work_dir" ;
-    sbpmn:varValue "." .
+ex:Var_WorkDir a agentflow:ProcessVariable ;
+    agentflow:varName "work_dir" ;
+    agentflow:varValue "." .
 
-ex:Var_Remote a sbpmn:ProcessVariable ;
-    sbpmn:varName "remote" ;
-    sbpmn:varValue "origin" .
+ex:Var_Remote a agentflow:ProcessVariable ;
+    agentflow:varName "remote" ;
+    agentflow:varValue "origin" .
 
-ex:Var_Branch a sbpmn:ProcessVariable ;
-    sbpmn:varName "branch" ;
-    sbpmn:varValue "main" .
+ex:Var_Branch a agentflow:ProcessVariable ;
+    agentflow:varName "branch" ;
+    agentflow:varValue "main" .

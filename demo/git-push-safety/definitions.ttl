@@ -1,7 +1,7 @@
 @prefix rdfs:      <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
-@prefix sbpmn:     <http://example.org/ontology/sbpmn#> .
-@prefix sbpmnc:    <http://example.org/ontology/sbpmnc#> .
+@prefix sbpmn:     <https://sBPMN.github.io/2.0/properties#> .
+@prefix sbpmnc:    <https://sBPMN.github.io/2.0/classes#> .
 @prefix agentflow: <http://example.org/ontology/agentflow#> .
 @prefix ex:        <http://example.org/instances/> .
 
@@ -19,42 +19,42 @@
 ex:ProcDef_GitPushSafety a agentflow:AgenticProcess ;
     rdfs:label "Git Push Safety Workflow" ;
     agentflow:engineVersion "0.1.0" ;
-    sbpmn:hasStartEvent ex:Start_GitPush ;
-    sbpmn:hasEndEvent ex:End_Completed, ex:End_Aborted .
+    agentflow:hasStartEvent ex:Start_GitPush ;
+    agentflow:hasEndEvent ex:End_Completed, ex:End_Aborted .
 
 # ── Start Event ───────────────────────────────────────────
 
-ex:Start_GitPush a sbpmnc:StartEvent ;
+ex:Start_GitPush a sbpmnc:startEvent ;
     rdfs:label "Git Push Initiated" ;
-    sbpmn:nextTask ex:Task_StageChanges .
+    agentflow:nextTask ex:Task_StageChanges .
 
 # ── Task 1: Stage Changes ────────────────────────────────
 
 ex:Task_StageChanges a agentflow:AgenticTask ;
     rdfs:label "Stage Changes" ;
     agentflow:recipe "git_stage" ;
-    sbpmn:nextTask ex:Task_ScanSecrets .
+    agentflow:nextTask ex:Task_ScanSecrets .
 
 # ── Task 2: Scan Secrets ─────────────────────────────────
 
 ex:Task_ScanSecrets a agentflow:AgenticTask ;
     rdfs:label "Scan for Secrets & PII" ;
     agentflow:recipe "git_scan_secrets" ;
-    sbpmn:nextTask ex:Task_GenerateReport .
+    agentflow:nextTask ex:Task_GenerateReport .
 
 # ── Task 3: Generate Report ──────────────────────────────
 
 ex:Task_GenerateReport a agentflow:AgenticTask ;
     rdfs:label "Generate Pre-Push Security Report" ;
     agentflow:recipe "git_security_report" ;
-    sbpmn:nextTask ex:Task_ReadmeCheck .
+    agentflow:nextTask ex:Task_ReadmeCheck .
 
 # ── Task 4: README Check ─────────────────────────────────
 
 ex:Task_ReadmeCheck a agentflow:AgenticTask ;
     rdfs:label "Check README Staleness" ;
     agentflow:recipe "git_readme_check" ;
-    sbpmn:nextTask ex:GW_HumanApproval .
+    agentflow:nextTask ex:GW_HumanApproval .
 
 # ── GuardrailGateway: Human Approval (ALWAYS BLOCKS) ────
 
@@ -64,16 +64,16 @@ ex:GW_HumanApproval a agentflow:GuardrailGateway ;
     agentflow:approvalTimeout "PT1H"^^xsd:dayTimeDuration .
 
 # Branch A: Human approves → push
-ex:GW_HumanApproval sbpmn:nextTask ex:Task_ExecutePush {|
-    sbpmn:varName   "approval_status" ;
-    sbpmn:operator  "==" ;
-    sbpmn:threshold "APPROVED" ;
-    sbpmn:isDefault false
+ex:GW_HumanApproval agentflow:nextTask ex:Task_ExecutePush {|
+    agentflow:varName   "approval_status" ;
+    agentflow:operator  "==" ;
+    agentflow:threshold "APPROVED" ;
+    agentflow:isDefault false
 |} .
 
 # Branch B: Denied or timeout → abort
-ex:GW_HumanApproval sbpmn:nextTask ex:End_Aborted {|
-    sbpmn:isDefault true
+ex:GW_HumanApproval agentflow:nextTask ex:End_Aborted {|
+    agentflow:isDefault true
 |} .
 
 # ── Task 5: Execute Push ─────────────────────────────────
@@ -81,19 +81,19 @@ ex:GW_HumanApproval sbpmn:nextTask ex:End_Aborted {|
 ex:Task_ExecutePush a agentflow:AgenticTask ;
     rdfs:label "Execute Git Push" ;
     agentflow:recipe "git_push" ;
-    sbpmn:nextTask ex:Task_LogResult .
+    agentflow:nextTask ex:Task_LogResult .
 
 # ── Task 6: Log Result ───────────────────────────────────
 
 ex:Task_LogResult a agentflow:AgenticTask ;
     rdfs:label "Log Push Result" ;
     agentflow:recipe "git_log_result" ;
-    sbpmn:nextTask ex:End_Completed .
+    agentflow:nextTask ex:End_Completed .
 
 # ── End Events ────────────────────────────────────────────
 
-ex:End_Completed a sbpmnc:EndEvent ;
+ex:End_Completed a sbpmnc:endEvent ;
     rdfs:label "Push Completed Successfully" .
 
-ex:End_Aborted a sbpmnc:EndEvent ;
+ex:End_Aborted a sbpmnc:endEvent ;
     rdfs:label "Push Aborted" .

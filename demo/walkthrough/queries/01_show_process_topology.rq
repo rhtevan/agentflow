@@ -2,14 +2,14 @@
 # Shows all nodes and edges in the process definition.
 # Run in Fuseki YASGUI: http://localhost:3030/#/dataset/agentflow/query
 
-PREFIX sbpmn:     <http://example.org/ontology/sbpmn#>
-PREFIX sbpmnc:    <http://example.org/ontology/sbpmnc#>
+PREFIX sbpmn:     <https://sBPMN.github.io/2.0/properties#>
+PREFIX sbpmnc:    <https://sBPMN.github.io/2.0/classes#>
 PREFIX agentflow: <http://example.org/ontology/agentflow#>
 PREFIX rdfs:      <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT ?from ?fromLabel ?fromType ?to ?toLabel ?toType WHERE {
   GRAPH <http://example.org/graphs/definitions> {
-    ?from sbpmn:nextTask ?to .
+    ?from agentflow:nextTask ?to .
     ?from a ?fromType .
     ?to   a ?toType .
     OPTIONAL { ?from rdfs:label ?fromLabel }

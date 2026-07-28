@@ -1,8 +1,8 @@
 @prefix sh:        <http://www.w3.org/ns/shacl#> .
 @prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
-@prefix sbpmn:     <http://example.org/ontology/sbpmn#> .
-@prefix sbpmnc:    <http://example.org/ontology/sbpmnc#> .
-@prefix cto:       <http://example.org/ontology/cto#> .
+@prefix sbpmn:     <https://sBPMN.github.io/2.0/properties#> .
+@prefix sbpmnc:    <https://sBPMN.github.io/2.0/classes#> .
+@prefix cto:       <https://github.com/Point-Topic/cto-ontology/> .
 @prefix ex:        <http://example.org/shapes/> .
 
 # ═══════════════════════════════════════════════════════════
@@ -44,10 +44,10 @@ ex:ActiveTargetConstraint a sh:NodeShape ;
     sh:target [
         a sh:SPARQLTarget ;
         sh:select """
-            PREFIX cto: <http://example.org/ontology/cto#>
-            PREFIX sbpmnc: <http://example.org/ontology/sbpmnc#>
+            PREFIX cto: <https://github.com/Point-Topic/cto-ontology/>
+            PREFIX sbpmnc: <https://sBPMN.github.io/2.0/classes#>
             SELECT ?this WHERE {
-                ?this a sbpmnc:Task ;
+                ?this a sbpmnc:task ;
                       cto:targetsNetworkElement ?node .
             }
         """ ;
@@ -55,7 +55,7 @@ ex:ActiveTargetConstraint a sh:NodeShape ;
     sh:sparql [
         sh:message "Task targets a NetworkElement that is not ACTIVE." ;
         sh:select """
-            PREFIX cto: <http://example.org/ontology/cto#>
+            PREFIX cto: <https://github.com/Point-Topic/cto-ontology/>
             SELECT $this (cto:targetsNetworkElement AS ?path)
                    (?status AS ?value)
             WHERE {

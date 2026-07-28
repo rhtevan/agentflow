@@ -2,18 +2,18 @@
 # Shows where the process token currently sits.
 # Run this while the engine is paused (--pause mode) to see live state.
 
-PREFIX sbpmn:     <http://example.org/ontology/sbpmn#>
-PREFIX sbpmnc:    <http://example.org/ontology/sbpmnc#>
+PREFIX sbpmn:     <https://sBPMN.github.io/2.0/properties#>
+PREFIX sbpmnc:    <https://sBPMN.github.io/2.0/classes#>
 PREFIX agentflow: <http://example.org/ontology/agentflow#>
 PREFIX rdfs:      <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT ?process ?processStatus ?currentTaskInst ?taskDef ?taskLabel ?taskStatus ?nodeType WHERE {
   GRAPH <http://example.org/graphs/runtime> {
-    ?process a sbpmn:ProcessInstance ;
-             sbpmn:processStatus ?processStatus ;
-             sbpmn:currentTask ?currentTaskInst .
-    ?currentTaskInst sbpmn:instantiatesTask ?taskDef ;
-                     sbpmn:taskStatus ?taskStatus .
+    ?process a agentflow:ProcessInstance ;
+             agentflow:processStatus ?processStatus ;
+             agentflow:currentTask ?currentTaskInst .
+    ?currentTaskInst agentflow:instantiatesTask ?taskDef ;
+                     agentflow:taskStatus ?taskStatus .
   }
   GRAPH <http://example.org/graphs/definitions> {
     ?taskDef a ?nodeType .

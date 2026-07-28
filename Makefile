@@ -41,17 +41,23 @@ approve: ## Inject approval decision (usage: make approve PROCESS=ProcInst_GitPu
 	@curl -s -o /dev/null -w 'HTTP %{http_code}\n' \
 	  -X POST "$(FUSEKI_HOST)/$(DATASET)/update" \
 	  -H "Content-Type: application/sparql-update" \
-	  --data "PREFIX sbpmn: <http://example.org/ontology/sbpmn#> \
+	  --data "PREFIX agentflow: <http://example.org/ontology/agentflow#> \
 	    PREFIX ex: <http://example.org/instances/> \
 	    INSERT DATA { \
 	      GRAPH <$(RUNTIME_GRAPH)> { \
-	        _:approval a sbpmn:ProcessVariable ; \
-	          sbpmn:varName \"approval_status\" ; \
-	          sbpmn:varValue \"$(VALUE)\" . \
-	        ex:$(PROCESS) sbpmn:hasVariable _:approval . \
+	        _:approval a agentflow:ProcessVariable ; \
+	          agentflow:varName \"approval_status\" ; \
+	          agentflow:varValue \"$(VALUE)\" . \
+	        ex:$(PROCESS) agentflow:hasVariable _:approval . \
 	      } \
 	    }"
 	@echo '✓ Approval set: $(VALUE) for $(PROCESS)'
+
+test: ## Run all tests (needs Fuseki + Goose)
+	@bash tests/run_all.sh all
+
+test-fast: ## Syntax + namespace checks only (no Fuseki needed)
+	@bash tests/run_all.sh fast
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \

@@ -1,9 +1,9 @@
 @prefix rdfs:      <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
-@prefix sbpmn:     <http://example.org/ontology/sbpmn#> .
-@prefix sbpmnc:    <http://example.org/ontology/sbpmnc#> .
+@prefix sbpmn:     <https://sBPMN.github.io/2.0/properties#> .
+@prefix sbpmnc:    <https://sBPMN.github.io/2.0/classes#> .
 @prefix agentflow: <http://example.org/ontology/agentflow#> .
-@prefix cto:       <http://example.org/ontology/cto#> .
+@prefix cto:       <https://github.com/Point-Topic/cto-ontology/> .
 @prefix ex:        <http://example.org/instances/> .
 
 # ═══════════════════════════════════════════════════════════
@@ -18,8 +18,8 @@
 ex:ProcDef_SIMActivation a agentflow:AgenticProcess ;
     rdfs:label "SIM Card Activation Workflow" ;
     agentflow:engineVersion "0.1.0" ;
-    sbpmn:hasStartEvent ex:Start_SIM ;
-    sbpmn:hasEndEvent ex:End_SIM .
+    agentflow:hasStartEvent ex:Start_SIM ;
+    agentflow:hasEndEvent ex:End_SIM .
 
 # ── CTO Network Element (Object Under Process) ───────────
 
@@ -31,33 +31,33 @@ ex:HLR_Toronto_01 a cto:HomeLocationRegister ;
 
 # ── Start Event ───────────────────────────────────────────
 
-ex:Start_SIM a sbpmnc:StartEvent ;
+ex:Start_SIM a sbpmnc:startEvent ;
     rdfs:label "SIM Activation Initiated" ;
-    sbpmn:nextTask ex:Task_ClassifyRequest .
+    agentflow:nextTask ex:Task_ClassifyRequest .
 
 # ── Task 1: Classify Request ─────────────────────────────
 
 ex:Task_ClassifyRequest a agentflow:AgenticTask ;
     rdfs:label "Classify Request" ;
     agentflow:recipe "classify_request" ;
-    sbpmn:nextTask ex:GW_SeverityCheck .
+    agentflow:nextTask ex:GW_SeverityCheck .
 
 # ── Gateway: Severity Check (ExclusiveGateway) ───────────
 
-ex:GW_SeverityCheck a sbpmnc:ExclusiveGateway ;
+ex:GW_SeverityCheck a sbpmnc:exclusiveGateway ;
     rdfs:label "Severity Check" .
 
 # Branch A: severity == "CRITICAL" → escalate
-ex:GW_SeverityCheck sbpmn:nextTask ex:Task_Escalate {|
-    sbpmn:varName   "severity" ;
-    sbpmn:operator  "==" ;
-    sbpmn:threshold "CRITICAL" ;
-    sbpmn:isDefault false
+ex:GW_SeverityCheck agentflow:nextTask ex:Task_Escalate {|
+    agentflow:varName   "severity" ;
+    agentflow:operator  "==" ;
+    agentflow:threshold "CRITICAL" ;
+    agentflow:isDefault false
 |} .
 
 # Branch B: default → provision
-ex:GW_SeverityCheck sbpmn:nextTask ex:Task_ProvisionHLR {|
-    sbpmn:isDefault true
+ex:GW_SeverityCheck agentflow:nextTask ex:Task_ProvisionHLR {|
+    agentflow:isDefault true
 |} .
 
 # ── Task 2a: Escalate Issue ──────────────────────────────
@@ -65,7 +65,7 @@ ex:GW_SeverityCheck sbpmn:nextTask ex:Task_ProvisionHLR {|
 ex:Task_Escalate a agentflow:AgenticTask ;
     rdfs:label "Escalate Issue" ;
     agentflow:recipe "escalate_issue" ;
-    sbpmn:nextTask ex:Task_LogCompletion .
+    agentflow:nextTask ex:Task_LogCompletion .
 
 # ── Task 2b: Provision HLR ───────────────────────────────
 
@@ -73,16 +73,16 @@ ex:Task_ProvisionHLR a agentflow:AgenticTask ;
     rdfs:label "Provision Subscriber on HLR" ;
     agentflow:recipe "provision_hlr" ;
     cto:targetsNetworkElement ex:HLR_Toronto_01 ;
-    sbpmn:nextTask ex:Task_LogCompletion .
+    agentflow:nextTask ex:Task_LogCompletion .
 
 # ── Task 3: Log Completion ───────────────────────────────
 
 ex:Task_LogCompletion a agentflow:AgenticTask ;
     rdfs:label "Log Completion" ;
     agentflow:recipe "log_completion" ;
-    sbpmn:nextTask ex:End_SIM .
+    agentflow:nextTask ex:End_SIM .
 
 # ── End Event ─────────────────────────────────────────────
 
-ex:End_SIM a sbpmnc:EndEvent ;
+ex:End_SIM a sbpmnc:endEvent ;
     rdfs:label "SIM Activation Completed" .

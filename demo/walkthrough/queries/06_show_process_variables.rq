@@ -2,14 +2,14 @@
 # Shows all process variables accumulated during execution.
 # Run after each task to see how the ABox state grows.
 
-PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+PREFIX sbpmn: <https://sBPMN.github.io/2.0/properties#>
 
 SELECT ?process ?varName ?varValue WHERE {
   GRAPH <http://example.org/graphs/runtime> {
-    ?process a sbpmn:ProcessInstance ;
-             sbpmn:hasVariable ?var .
-    ?var sbpmn:varName ?varName ;
-         sbpmn:varValue ?varValue .
+    ?process a agentflow:ProcessInstance ;
+             agentflow:hasVariable ?var .
+    ?var agentflow:varName ?varName ;
+         agentflow:varValue ?varValue .
   }
 }
 ORDER BY ?process ?varName

@@ -1,5 +1,5 @@
-@prefix sbpmn:     <http://example.org/ontology/sbpmn#> .
-@prefix sbpmnc:    <http://example.org/ontology/sbpmnc#> .
+@prefix sbpmn:     <https://sBPMN.github.io/2.0/properties#> .
+@prefix sbpmnc:    <https://sBPMN.github.io/2.0/classes#> .
 @prefix agentflow: <http://example.org/ontology/agentflow#> .
 @prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:        <http://example.org/instances/> .
@@ -14,29 +14,29 @@
 
 # ── Process Instance ──────────────────────────────────────
 
-ex:ProcInst_SIM_001 a sbpmn:ProcessInstance ;
-    sbpmn:instantiatesProcess ex:ProcDef_SIMActivation ;
-    sbpmn:processStatus "RUNNING" ;
-    sbpmn:currentTask ex:TaskInst_Start_SIM ;
-    sbpmn:hasVariable ex:Var_MSISDN, ex:Var_IMSI, ex:Var_RequestText .
+ex:ProcInst_SIM_001 a agentflow:ProcessInstance ;
+    agentflow:instantiatesProcess ex:ProcDef_SIMActivation ;
+    agentflow:processStatus "RUNNING" ;
+    agentflow:currentTask ex:TaskInst_Start_SIM ;
+    agentflow:hasVariable ex:Var_MSISDN, ex:Var_IMSI, ex:Var_RequestText .
 
 # ── Initial Task Instance (at StartEvent) ─────────────────
 
-ex:TaskInst_Start_SIM a sbpmn:TaskInstance ;
-    sbpmn:instantiatesTask ex:Start_SIM ;
-    sbpmn:taskStatus "RUNNING" ;
-    sbpmn:startTime "2026-07-28T14:00:00Z"^^xsd:dateTime .
+ex:TaskInst_Start_SIM a agentflow:TaskInstance ;
+    agentflow:instantiatesTask ex:Start_SIM ;
+    agentflow:taskStatus "RUNNING" ;
+    agentflow:startTime "2026-07-28T14:00:00Z"^^xsd:dateTime .
 
 # ── Process Variables (Object Under Process: SIM Card) ────
 
-ex:Var_MSISDN a sbpmn:ProcessVariable ;
-    sbpmn:varName "msisdn" ;
-    sbpmn:varValue "+14165550199" .
+ex:Var_MSISDN a agentflow:ProcessVariable ;
+    agentflow:varName "msisdn" ;
+    agentflow:varValue "+14165550199" .
 
-ex:Var_IMSI a sbpmn:ProcessVariable ;
-    sbpmn:varName "imsi" ;
-    sbpmn:varValue "302720123456789" .
+ex:Var_IMSI a agentflow:ProcessVariable ;
+    agentflow:varName "imsi" ;
+    agentflow:varValue "302720123456789" .
 
-ex:Var_RequestText a sbpmn:ProcessVariable ;
-    sbpmn:varName "request_text" ;
-    sbpmn:varValue "Enterprise customer requests SIM activation for new executive device. Priority account with SLA guarantees. Requires immediate provisioning on Toronto HLR cluster." .
+ex:Var_RequestText a agentflow:ProcessVariable ;
+    agentflow:varName "request_text" ;
+    agentflow:varValue "Enterprise customer requests SIM activation for new executive device. Priority account with SLA guarantees. Requires immediate provisioning on Toronto HLR cluster." .

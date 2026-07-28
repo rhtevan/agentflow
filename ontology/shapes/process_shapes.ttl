@@ -1,8 +1,8 @@
 @prefix sh:        <http://www.w3.org/ns/shacl#> .
 @prefix owl:       <http://www.w3.org/2002/07/owl#> .
 @prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
-@prefix sbpmn:     <http://example.org/ontology/sbpmn#> .
-@prefix sbpmnc:    <http://example.org/ontology/sbpmnc#> .
+@prefix sbpmn:     <https://sBPMN.github.io/2.0/properties#> .
+@prefix sbpmnc:    <https://sBPMN.github.io/2.0/classes#> .
 @prefix agentflow: <http://example.org/ontology/agentflow#> .
 @prefix ex:        <http://example.org/shapes/> .
 
@@ -33,9 +33,9 @@ ex:AgenticTaskShape a sh:NodeShape ;
 # ───────────────────────────────────────────────────────────
 
 ex:ProcessInstanceShape a sh:NodeShape ;
-    sh:targetClass sbpmn:ProcessInstance ;
+    sh:targetClass agentflow:ProcessInstance ;
     sh:property [
-        sh:path sbpmn:processStatus ;
+        sh:path agentflow:processStatus ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:datatype xsd:string ;
@@ -43,7 +43,7 @@ ex:ProcessInstanceShape a sh:NodeShape ;
         sh:message "ProcessInstance must have a valid processStatus." ;
     ] ;
     sh:property [
-        sh:path sbpmn:instantiatesProcess ;
+        sh:path agentflow:instantiatesProcess ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:message "ProcessInstance must link to a ProcessDefinition." ;
@@ -57,18 +57,18 @@ ex:RunningProcessShape a sh:NodeShape ;
     sh:target [
         a sh:SPARQLTarget ;
         sh:select """
-            PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+            PREFIX sbpmn: <https://sBPMN.github.io/2.0/properties#>
             SELECT ?this WHERE {
-                ?this a sbpmn:ProcessInstance ;
-                      sbpmn:processStatus "RUNNING" .
+                ?this a agentflow:ProcessInstance ;
+                      agentflow:processStatus "RUNNING" .
             }
         """ ;
     ] ;
     sh:property [
-        sh:path sbpmn:currentTask ;
+        sh:path agentflow:currentTask ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:class sbpmn:TaskInstance ;
+        sh:class agentflow:TaskInstance ;
         sh:message "A RUNNING ProcessInstance must have exactly one currentTask." ;
     ] .
 
@@ -77,15 +77,15 @@ ex:RunningProcessShape a sh:NodeShape ;
 # ───────────────────────────────────────────────────────────
 
 ex:TaskInstanceShape a sh:NodeShape ;
-    sh:targetClass sbpmn:TaskInstance ;
+    sh:targetClass agentflow:TaskInstance ;
     sh:property [
-        sh:path sbpmn:instantiatesTask ;
+        sh:path agentflow:instantiatesTask ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:message "TaskInstance must link to a task definition via instantiatesTask." ;
     ] ;
     sh:property [
-        sh:path sbpmn:taskStatus ;
+        sh:path agentflow:taskStatus ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:datatype xsd:string ;
@@ -112,16 +112,16 @@ ex:GuardrailGatewayShape a sh:NodeShape ;
 # ───────────────────────────────────────────────────────────
 
 ex:ProcessVariableShape a sh:NodeShape ;
-    sh:targetClass sbpmn:ProcessVariable ;
+    sh:targetClass agentflow:ProcessVariable ;
     sh:property [
-        sh:path sbpmn:varName ;
+        sh:path agentflow:varName ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:datatype xsd:string ;
         sh:message "ProcessVariable must have a varName." ;
     ] ;
     sh:property [
-        sh:path sbpmn:varValue ;
+        sh:path agentflow:varValue ;
         sh:minCount 1 ;
         sh:message "ProcessVariable must have a varValue." ;
     ] .

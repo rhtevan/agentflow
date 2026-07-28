@@ -78,8 +78,9 @@ pause_for_inspection() {
 
 fetch_current_node() {
     sparql_query "
-        PREFIX sbpmn:     <http://example.org/ontology/sbpmn#>
-        PREFIX sbpmnc:    <http://example.org/ontology/sbpmnc#>
+        PREFIX sbpmn:     <https://sBPMN.github.io/2.0/properties#>
+        PREFIX agentflow: <http://example.org/ontology/agentflow#>
+        PREFIX sbpmnc:    <https://sBPMN.github.io/2.0/classes#>
         PREFIX agentflow: <http://example.org/ontology/agentflow#>
         PREFIX rdfs:      <http://www.w3.org/2000/01/rdf-schema#>
 
@@ -87,11 +88,11 @@ fetch_current_node() {
                ?nodeType ?recipe ?requiresApproval
         WHERE {
             GRAPH <${RUNTIME_GRAPH}> {
-                ?process a sbpmn:ProcessInstance ;
-                         sbpmn:processStatus ?processStatus ;
-                         sbpmn:currentTask ?taskInst .
-                ?taskInst sbpmn:instantiatesTask ?taskDef ;
-                          sbpmn:taskStatus ?taskStatus .
+                ?process a agentflow:ProcessInstance ;
+                         agentflow:processStatus ?processStatus ;
+                         agentflow:currentTask ?taskInst .
+                ?taskInst agentflow:instantiatesTask ?taskDef ;
+                          agentflow:taskStatus ?taskStatus .
             }
             GRAPH <${DEFINITIONS_GRAPH}> {
                 ?taskDef a ?nodeType .
@@ -117,33 +118,34 @@ advance_token() {
     local triggered_by="${5:-BashFlowEngine}"
 
     sparql_update "
-        PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+        PREFIX sbpmn: <https://sBPMN.github.io/2.0/properties#>
+        PREFIX agentflow: <http://example.org/ontology/agentflow#>
         PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
 
         DELETE {
             GRAPH <${RUNTIME_GRAPH}> {
-                <${process_uri}> sbpmn:currentTask <${current_inst_uri}> .
-                <${current_inst_uri}> sbpmn:taskStatus ?oldStatus .
+                <${process_uri}> agentflow:currentTask <${current_inst_uri}> .
+                <${current_inst_uri}> agentflow:taskStatus ?oldStatus .
             }
         }
         INSERT {
             GRAPH <${RUNTIME_GRAPH}> {
-                <${current_inst_uri}> sbpmn:taskStatus \"COMPLETED\" .
-                <${current_inst_uri}> sbpmn:endTime ?now .
+                <${current_inst_uri}> agentflow:taskStatus \"COMPLETED\" .
+                <${current_inst_uri}> agentflow:endTime ?now .
 
-                ?newTaskInst a sbpmn:TaskInstance ;
-                    sbpmn:instantiatesTask <${next_def_uri}> ;
-                    sbpmn:taskStatus \"RUNNING\" ;
-                    sbpmn:startTime ?now .
+                ?newTaskInst a agentflow:TaskInstance ;
+                    agentflow:instantiatesTask <${next_def_uri}> ;
+                    agentflow:taskStatus \"RUNNING\" ;
+                    agentflow:startTime ?now .
 
-                <${process_uri}> sbpmn:currentTask ?newTaskInst .
+                <${process_uri}> agentflow:currentTask ?newTaskInst .
 
-                <${current_inst_uri}> sbpmn:followedBy ?newTaskInst .
+                <${current_inst_uri}> agentflow:followedBy ?newTaskInst .
             }
         }
         WHERE {
             GRAPH <${RUNTIME_GRAPH}> {
-                <${current_inst_uri}> sbpmn:taskStatus ?oldStatus .
+                <${current_inst_uri}> agentflow:taskStatus ?oldStatus .
             }
             BIND(NOW() AS ?now)
             BIND(IRI(CONCAT(\"http://example.org/instances/TaskInst_\", STRUUID())) AS ?newTaskInst)
@@ -161,26 +163,27 @@ complete_process() {
     local end_status="${3:-COMPLETED}"
 
     sparql_update "
-        PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+        PREFIX sbpmn: <https://sBPMN.github.io/2.0/properties#>
+        PREFIX agentflow: <http://example.org/ontology/agentflow#>
 
         DELETE {
             GRAPH <${RUNTIME_GRAPH}> {
-                <${process_uri}> sbpmn:currentTask <${current_inst_uri}> .
-                <${process_uri}> sbpmn:processStatus ?oldStatus .
-                <${current_inst_uri}> sbpmn:taskStatus ?oldTaskStatus .
+                <${process_uri}> agentflow:currentTask <${current_inst_uri}> .
+                <${process_uri}> agentflow:processStatus ?oldStatus .
+                <${current_inst_uri}> agentflow:taskStatus ?oldTaskStatus .
             }
         }
         INSERT {
             GRAPH <${RUNTIME_GRAPH}> {
-                <${process_uri}> sbpmn:processStatus \"${end_status}\" .
-                <${current_inst_uri}> sbpmn:taskStatus \"COMPLETED\" .
-                <${current_inst_uri}> sbpmn:endTime ?now .
+                <${process_uri}> agentflow:processStatus \"${end_status}\" .
+                <${current_inst_uri}> agentflow:taskStatus \"COMPLETED\" .
+                <${current_inst_uri}> agentflow:endTime ?now .
             }
         }
         WHERE {
             GRAPH <${RUNTIME_GRAPH}> {
-                <${process_uri}> sbpmn:processStatus ?oldStatus .
-                <${current_inst_uri}> sbpmn:taskStatus ?oldTaskStatus .
+                <${process_uri}> agentflow:processStatus ?oldStatus .
+                <${current_inst_uri}> agentflow:taskStatus ?oldTaskStatus .
             }
             BIND(NOW() AS ?now)
         }
@@ -188,17 +191,18 @@ complete_process() {
 }
 
 # ══════════════════════════════════════════════════════════
-# GET NEXT NODE — find the next node via sbpmn:nextTask
+# GET NEXT NODE — find the next node via agentflow:nextTask
 # ══════════════════════════════════════════════════════════
 
 get_next_node() {
     local current_def_uri="$1"
     sparql_query "
-        PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+        PREFIX sbpmn: <https://sBPMN.github.io/2.0/properties#>
+        PREFIX agentflow: <http://example.org/ontology/agentflow#>
 
         SELECT ?next WHERE {
             GRAPH <${DEFINITIONS_GRAPH}> {
-                <${current_def_uri}> sbpmn:nextTask ?next .
+                <${current_def_uri}> agentflow:nextTask ?next .
             }
         }
         LIMIT 1
@@ -229,13 +233,14 @@ execute_agentic_task() {
     # Extract process variables from ABox as params
     local params_json
     params_json=$(sparql_query "
-        PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+        PREFIX sbpmn: <https://sBPMN.github.io/2.0/properties#>
+        PREFIX agentflow: <http://example.org/ontology/agentflow#>
 
         SELECT ?varName ?varValue WHERE {
             GRAPH <${RUNTIME_GRAPH}> {
-                <${process_uri}> sbpmn:hasVariable ?var .
-                ?var sbpmn:varName ?varName ;
-                     sbpmn:varValue ?varValue .
+                <${process_uri}> agentflow:hasVariable ?var .
+                ?var agentflow:varName ?varName ;
+                     agentflow:varValue ?varValue .
             }
         }
     " | jq -r '[ .results.bindings[] | { (.varName.value): .varValue.value } ] | add // {}')
@@ -307,11 +312,12 @@ execute_agentic_task() {
     local escaped_output
     escaped_output=$(echo "$task_output" | jq -Rs .)
     sparql_update "
-        PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+        PREFIX sbpmn: <https://sBPMN.github.io/2.0/properties#>
+        PREFIX agentflow: <http://example.org/ontology/agentflow#>
 
         INSERT {
             GRAPH <${RUNTIME_GRAPH}> {
-                <${task_inst_uri}> sbpmn:taskOutput ${escaped_output} .
+                <${task_inst_uri}> agentflow:taskOutput ${escaped_output} .
             }
         }
         WHERE {}
@@ -326,16 +332,16 @@ execute_agentic_task() {
         # Escape quotes and backslashes for SPARQL literal
         val=$(echo "$val" | sed 's/\\/\\\\/g; s/"/\\"/g')
         var_updates+="
-            _:var_${key} a sbpmn:ProcessVariable ;
-                sbpmn:varName \"${key}\" ;
-                sbpmn:varValue \"${val}\" .
-            <${process_uri}> sbpmn:hasVariable _:var_${key} .
+            _:var_${key} a agentflow:ProcessVariable ;
+                agentflow:varName \"${key}\" ;
+                agentflow:varValue \"${val}\" .
+            <${process_uri}> agentflow:hasVariable _:var_${key} .
         "
     done < <(echo "$task_output" | jq -r 'keys[]')
 
     if [[ -n "$var_updates" ]]; then
         sparql_update "
-            PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+            PREFIX agentflow: <http://example.org/ontology/agentflow#>
 
             INSERT DATA {
                 GRAPH <${RUNTIME_GRAPH}> {
@@ -367,20 +373,21 @@ evaluate_gateway() {
     # Get all outgoing edges with conditions
     local edges
     edges=$(sparql_query "
-        PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+        PREFIX sbpmn: <https://sBPMN.github.io/2.0/properties#>
+        PREFIX agentflow: <http://example.org/ontology/agentflow#>
 
         SELECT ?target ?varName ?operator ?threshold ?isDefault WHERE {
             GRAPH <${DEFINITIONS_GRAPH}> {
-                <${task_def_uri}> sbpmn:nextTask ?target .
+                <${task_def_uri}> agentflow:nextTask ?target .
                 OPTIONAL {
-                    << <${task_def_uri}> sbpmn:nextTask ?target >>
-                        sbpmn:varName ?varName ;
-                        sbpmn:operator ?operator ;
-                        sbpmn:threshold ?threshold .
+                    << <${task_def_uri}> agentflow:nextTask ?target >>
+                        agentflow:varName ?varName ;
+                        agentflow:operator ?operator ;
+                        agentflow:threshold ?threshold .
                 }
                 OPTIONAL {
-                    << <${task_def_uri}> sbpmn:nextTask ?target >>
-                        sbpmn:isDefault ?isDefault .
+                    << <${task_def_uri}> agentflow:nextTask ?target >>
+                        agentflow:isDefault ?isDefault .
                 }
             }
         }
@@ -411,13 +418,14 @@ evaluate_gateway() {
             # Get variable value from ABox
             local var_value
             var_value=$(sparql_query "
-                PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+                PREFIX sbpmn: <https://sBPMN.github.io/2.0/properties#>
+                PREFIX agentflow: <http://example.org/ontology/agentflow#>
 
                 SELECT ?varValue WHERE {
                     GRAPH <${RUNTIME_GRAPH}> {
-                        <${process_uri}> sbpmn:hasVariable ?var .
-                        ?var sbpmn:varName \"${var_name}\" ;
-                             sbpmn:varValue ?varValue .
+                        <${process_uri}> agentflow:hasVariable ?var .
+                        ?var agentflow:varName \"${var_name}\" ;
+                             agentflow:varValue ?varValue .
                     }
                 }
                 ORDER BY DESC(?varValue)
@@ -473,12 +481,13 @@ poll_for_approval() {
     # Find the variable name this gateway checks
     local var_name
     var_name=$(sparql_query "
-        PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+        PREFIX sbpmn: <https://sBPMN.github.io/2.0/properties#>
+        PREFIX agentflow: <http://example.org/ontology/agentflow#>
 
         SELECT ?varName WHERE {
             GRAPH <${DEFINITIONS_GRAPH}> {
-                << <${gateway_def_uri}> sbpmn:nextTask ?anyTarget >>
-                    sbpmn:varName ?varName .
+                << <${gateway_def_uri}> agentflow:nextTask ?anyTarget >>
+                    agentflow:varName ?varName .
             }
         }
         LIMIT 1
@@ -508,13 +517,14 @@ poll_for_approval() {
     while [[ $elapsed -lt $APPROVAL_TIMEOUT_SECONDS ]]; do
         local value
         value=$(sparql_query "
-            PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+            PREFIX sbpmn: <https://sBPMN.github.io/2.0/properties#>
+                PREFIX agentflow: <http://example.org/ontology/agentflow#>
 
             SELECT ?varValue WHERE {
                 GRAPH <${RUNTIME_GRAPH}> {
-                    <${process_uri}> sbpmn:hasVariable ?var .
-                    ?var sbpmn:varName \"${var_name}\" ;
-                         sbpmn:varValue ?varValue .
+                    <${process_uri}> agentflow:hasVariable ?var .
+                    ?var agentflow:varName \"${var_name}\" ;
+                         agentflow:varValue ?varValue .
                 }
             }
             ORDER BY DESC(?varValue)
@@ -535,14 +545,15 @@ poll_for_approval() {
     log_err "Approval timeout after ${APPROVAL_TIMEOUT_SECONDS}s — auto-DENIED"
 
     sparql_update "
-        PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+        PREFIX sbpmn: <https://sBPMN.github.io/2.0/properties#>
+        PREFIX agentflow: <http://example.org/ontology/agentflow#>
 
         INSERT DATA {
             GRAPH <${RUNTIME_GRAPH}> {
-                _:timeout_var a sbpmn:ProcessVariable ;
-                    sbpmn:varName \"${var_name}\" ;
-                    sbpmn:varValue \"DENIED\" .
-                <${process_uri}> sbpmn:hasVariable _:timeout_var .
+                _:timeout_var a agentflow:ProcessVariable ;
+                    agentflow:varName \"${var_name}\" ;
+                    agentflow:varValue \"DENIED\" .
+                <${process_uri}> agentflow:hasVariable _:timeout_var .
             }
         }
     "
@@ -578,8 +589,8 @@ while true; do
     fi
 
     # ── StartEvent ────────────────────────────────────
-    if [[ "$NODE_TYPE" == *"StartEvent"* ]]; then
-        log_event "→" "StartEvent: ${TASK_LABEL:-start}"
+    if [[ "$NODE_TYPE" == *"startEvent"* ]]; then
+        log_event "→" "startEvent: ${TASK_LABEL:-start}"
         NEXT=$(get_next_node "$TASK_DEF_URI")
         if [[ -z "$NEXT" ]]; then
             log_err "StartEvent has no outgoing edge"
@@ -592,8 +603,8 @@ while true; do
     fi
 
     # ── EndEvent ──────────────────────────────────────
-    if [[ "$NODE_TYPE" == *"EndEvent"* ]]; then
-        log_event "⏹" "EndEvent: ${TASK_LABEL:-end}"
+    if [[ "$NODE_TYPE" == *"endEvent"* ]]; then
+        log_event "⏹" "endEvent: ${TASK_LABEL:-end}"
         complete_process "$PROCESS_URI" "$TASK_INST_URI"
         log_ok "Process COMPLETED"
         break
@@ -620,7 +631,7 @@ while true; do
     fi
 
     # ── Gateway (ExclusiveGateway or GuardrailGateway) ─
-    if [[ "$NODE_TYPE" == *"Gateway"* ]]; then
+    if [[ "$NODE_TYPE" == *"ateway"* ]]; then
         gw_type="ExclusiveGateway"
         [[ "$NODE_TYPE" == *"GuardrailGateway"* ]] && gw_type="GuardrailGateway"
         log_event "◆" "${gw_type}: ${TASK_LABEL}"

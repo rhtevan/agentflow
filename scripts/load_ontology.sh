@@ -2,6 +2,9 @@
 # load_ontology.sh — Load TBox ontology and demo data into Fuseki
 # Usage: bash load_ontology.sh [demo-name]
 #   demo-name: sim-activation | git-push-safety | (empty = ontology only)
+#
+# Standard ontologies (sBPMN, CTO) are fetched from GitHub (Option B).
+# Only agentflow.ttl is local.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -15,6 +18,11 @@ else
 fi
 
 DEMO_NAME="${1:-}"
+
+# Standard ontology URLs
+SBPMN_URL="https://raw.githubusercontent.com/sBPMN/2.0/main/docs/ontology.ttl"
+SBPMN_SHACL_URL="https://raw.githubusercontent.com/sBPMN/2.0/main/docs/shacl.ttl"
+CTO_URL="https://raw.githubusercontent.com/Point-Topic/cto-ontology/main/resource/cto_core.ttl"
 
 info() { echo "  [+] $*"; }
 ok()   { echo "  [✓] $*"; }
@@ -30,6 +38,20 @@ load_turtle() {
         -X POST "${GSP_URL}?graph=${graph}" \
         -H "Content-Type: text/turtle" \
         --data-binary @"$file")
+    if [[ "$http_code" == "200" || "$http_code" == "201" || "$http_code" == "204" ]]; then
+        ok "${label} → ${graph} (HTTP ${http_code})"
+    else
+        fail "${label} → ${graph} (HTTP ${http_code})"
+    fi
+}
+
+load_turtle_from_url() {
+    local url="$1" graph="$2" label="$3"
+    local http_code
+    http_code=$(curl -sL "$url" | curl -s -o /dev/null -w '%{http_code}' \
+        -X POST "${GSP_URL}?graph=${graph}" \
+        -H "Content-Type: text/turtle" \
+        --data-binary @-)
     if [[ "$http_code" == "200" || "$http_code" == "201" || "$http_code" == "204" ]]; then
         ok "${label} → ${graph} (HTTP ${http_code})"
     else
@@ -71,10 +93,13 @@ fi
 
 echo ""
 
-# ── Load TBox (ontology schemas) ──────────────────────
-info "Loading TBox ontology into definitions graph..."
-load_turtle "${PROJECT_DIR}/ontology/sbpmn.ttl" "$DEFINITIONS_GRAPH" "sbpmn.ttl"
-load_turtle "${PROJECT_DIR}/ontology/cto.ttl" "$DEFINITIONS_GRAPH" "cto.ttl"
+# ── Load Standard Ontologies (fetched from GitHub) ────
+info "Loading standard ontologies from GitHub..."
+load_turtle_from_url "$SBPMN_URL" "$DEFINITIONS_GRAPH" "sBPMN ontology (GitHub)"
+load_turtle_from_url "$CTO_URL" "$DEFINITIONS_GRAPH" "CTO ontology (GitHub)"
+
+# ── Load AgentFLOW Extensions (local) ─────────────────
+info "Loading AgentFLOW extensions..."
 load_turtle "${PROJECT_DIR}/ontology/agentflow.ttl" "$DEFINITIONS_GRAPH" "agentflow.ttl"
 
 # ── Load Demo Data (if specified) ─────────────────────

@@ -61,13 +61,13 @@ to follow a complex instruction prompt.
 
 | Component | Role |
 |-----------|------|
-| **sBPMN Ontology** | Process classes (Task, Gateway, Event) in OWL/Turtle |
-| **CTO Ontology** | Telecom domain elements (HLR, network nodes) |
-| **AgentFLOW Ontology** | Agent extensions (AgenticTask, GuardrailGateway) |
-| **SHACL Shapes** | Pre-flight structural validation |
-| **Named Graphs** | TBox/ABox separation — definitions vs runtime state |
-| **Goose Recipes** | Fresh-context LLM task execution |
-| **Bash Engine** | Stateless orchestration loop |
+| **[sBPMN](https://sbpmn.github.io/2.0/index.html) Ontology** | Semantic BPMN — process classes (Task, Gateway, Event) in OWL/Turtle ([`ontology/sbpmn.ttl`](ontology/sbpmn.ttl), [reference implementation](https://github.com/sBPMN/2.0)) |
+| **[CTO](https://github.com/Point-Topic/cto-ontology) Ontology** | Common Telecommunications Ontology — network elements (HLR, nodes) ([`ontology/cto.ttl`](ontology/cto.ttl)) |
+| **AgentFLOW Ontology** | Agent extensions — AgenticTask, GuardrailGateway ([`ontology/agentflow.ttl`](ontology/agentflow.ttl)) |
+| **SHACL Shapes** | Pre-flight structural validation ([`ontology/shapes/`](ontology/shapes/)) |
+| **Named Graphs** | TBox/ABox separation — definitions vs runtime state ([architecture](docs/architecture.md)) |
+| **Goose Recipes** | Fresh-context LLM task execution ([`demo/sim-activation/recipes/`](demo/sim-activation/recipes/), [`demo/git-push-safety/recipes/`](demo/git-push-safety/recipes/)) |
+| **Bash Engine** | Stateless orchestration loop ([`engine/orchestrate.sh`](engine/orchestrate.sh)) |
 
 ## Quick Start
 

@@ -1,8 +1,8 @@
 @prefix owl:       <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs:      <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
-@prefix sbpmn:     <http://example.org/ontology/sbpmn#> .
-@prefix sbpmnc:    <http://example.org/ontology/sbpmnc#> .
+@prefix sbpmn:     <https://sBPMN.github.io/2.0/properties#> .
+@prefix sbpmnc:    <https://sBPMN.github.io/2.0/classes#> .
 @prefix agentflow: <http://example.org/ontology/agentflow#> .
 
 # ═══════════════════════════════════════════════════════════
@@ -18,14 +18,14 @@
 # 1. CLASSES
 # ───────────────────────────────────────────────────────────
 
-agentflow:AgenticProcess rdfs:subClassOf sbpmn:ProcessDefinition ;
+agentflow:AgenticProcess rdfs:subClassOf sbpmnc:process ;
     rdfs:label "Agentic Process" ;
     rdfs:comment """A process definition where tasks are executed by LLM agents
     via Goose recipes. Each task runs in a fresh, isolated context
     window (Ralph Loop pattern). The graph topology enforces step
     ordering and mandatory checkpoints — not the model's judgment.""" .
 
-agentflow:AgenticTask rdfs:subClassOf sbpmnc:Task ;
+agentflow:AgenticTask rdfs:subClassOf sbpmnc:task ;
     rdfs:label "Agentic Task" ;
     rdfs:comment """A task executed by an LLM agent in a fresh, isolated context.
     The agent receives structured parameters (extracted from the ABox),
@@ -38,7 +38,7 @@ agentflow:AgenticTask rdfs:subClassOf sbpmnc:Task ;
     This is a new kind of task that BPMN did not anticipate — a
     stateless, recipe-driven, non-deterministic actor.""" .
 
-agentflow:GuardrailGateway rdfs:subClassOf sbpmnc:ComplexGateway ;
+agentflow:GuardrailGateway rdfs:subClassOf sbpmnc:complexGateway ;
     rdfs:label "Guardrail Gateway" ;
     rdfs:comment """A complex gateway that enforces safety or compliance
     constraints in an agentic workflow. Supports two evaluation modes:
@@ -106,7 +106,7 @@ agentflow:paramSource a owl:DatatypeProperty ;
     rdfs:domain agentflow:ParamMapping ;
     rdfs:range xsd:string ;
     rdfs:label "parameter source" ;
-    rdfs:comment "The sbpmn:varName in the ABox to read from." .
+    rdfs:comment "The agentflow:varName in the ABox to read from." .
 
 agentflow:paramTarget a owl:DatatypeProperty ;
     rdfs:domain agentflow:ParamMapping ;
@@ -124,7 +124,7 @@ agentflow:outputTarget a owl:DatatypeProperty ;
     rdfs:domain agentflow:OutputMapping ;
     rdfs:range xsd:string ;
     rdfs:label "output target" ;
-    rdfs:comment "The sbpmn:varName to write to in the ABox." .
+    rdfs:comment "The agentflow:varName to write to in the ABox." .
 
 # ───────────────────────────────────────────────────────────
 # 4. GATEWAY PROPERTIES
@@ -155,3 +155,139 @@ agentflow:engineVersion a owl:DatatypeProperty ;
     rdfs:range xsd:string ;
     rdfs:label "engine version" ;
     rdfs:comment "Minimum AgentFLOW engine version required to execute this process." .
+
+# ───────────────────────────────────────────────────────────
+# 6. RUNTIME CLASSES (ABox)
+# ───────────────────────────────────────────────────────────
+
+agentflow:ProcessInstance a owl:Class ;
+    rdfs:label "Process Instance" ;
+    rdfs:comment "Runtime token tracking a running process execution." .
+
+agentflow:TaskInstance a owl:Class ;
+    rdfs:label "Task Instance" ;
+    rdfs:comment "Runtime record of a task execution within a process instance." .
+
+agentflow:ProcessVariable a owl:Class ;
+    rdfs:label "Process Variable" ;
+    rdfs:comment "A key-value pair attached to a process instance as runtime state." .
+
+# ───────────────────────────────────────────────────────────
+# 7. RUNTIME PROPERTIES (ABox state management)
+# ───────────────────────────────────────────────────────────
+
+# Process instance properties
+agentflow:processStatus a owl:DatatypeProperty ;
+    rdfs:domain agentflow:ProcessInstance ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Process status: RUNNING, COMPLETED, FAILED, ABORTED." .
+
+agentflow:currentTask a owl:ObjectProperty ;
+    rdfs:domain agentflow:ProcessInstance ;
+    rdfs:range agentflow:TaskInstance ;
+    rdfs:comment "Points to the currently active task instance (token position)." .
+
+agentflow:instantiatesProcess a owl:ObjectProperty ;
+    rdfs:domain agentflow:ProcessInstance ;
+    rdfs:range agentflow:AgenticProcess ;
+    rdfs:comment "Links runtime instance to its TBox process definition." .
+
+agentflow:hasVariable a owl:ObjectProperty ;
+    rdfs:domain agentflow:ProcessInstance ;
+    rdfs:range agentflow:ProcessVariable ;
+    rdfs:comment "Attaches a process variable to an instance." .
+
+# Task instance properties
+agentflow:taskStatus a owl:DatatypeProperty ;
+    rdfs:domain agentflow:TaskInstance ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Task status: PENDING, RUNNING, COMPLETED, FAILED." .
+
+agentflow:instantiatesTask a owl:ObjectProperty ;
+    rdfs:domain agentflow:TaskInstance ;
+    rdfs:range sbpmnc:flowNode ;
+    rdfs:comment "Links runtime task instance to its TBox task/gateway/event definition." .
+
+agentflow:taskOutput a owl:DatatypeProperty ;
+    rdfs:domain agentflow:TaskInstance ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Raw JSON output from the task execution." .
+
+agentflow:startTime a owl:DatatypeProperty ;
+    rdfs:domain agentflow:TaskInstance ;
+    rdfs:range xsd:dateTime .
+
+agentflow:endTime a owl:DatatypeProperty ;
+    rdfs:domain agentflow:TaskInstance ;
+    rdfs:range xsd:dateTime .
+
+# Process variable properties
+agentflow:varName a owl:DatatypeProperty ;
+    rdfs:domain agentflow:ProcessVariable ;
+    rdfs:range xsd:string .
+
+agentflow:varValue a owl:DatatypeProperty ;
+    rdfs:domain agentflow:ProcessVariable ;
+    rdfs:range xsd:string .
+
+# ───────────────────────────────────────────────────────────
+# 8. TOPOLOGY PROPERTIES (process graph navigation)
+# ───────────────────────────────────────────────────────────
+
+agentflow:nextTask a owl:ObjectProperty ;
+    rdfs:domain sbpmnc:flowNode ;
+    rdfs:range sbpmnc:flowNode ;
+    rdfs:comment "Simplified sequence flow — connects flow nodes directly." .
+
+agentflow:hasStartEvent a owl:ObjectProperty ;
+    rdfs:domain agentflow:AgenticProcess ;
+    rdfs:range sbpmnc:startEvent .
+
+agentflow:hasEndEvent a owl:ObjectProperty ;
+    rdfs:domain agentflow:AgenticProcess ;
+    rdfs:range sbpmnc:endEvent .
+
+agentflow:hasTask a owl:ObjectProperty ;
+    rdfs:domain agentflow:AgenticProcess ;
+    rdfs:range sbpmnc:flowNode .
+
+# ───────────────────────────────────────────────────────────
+# 9. GATEWAY EDGE ANNOTATION PROPERTIES (Turtle-star)
+# ───────────────────────────────────────────────────────────
+
+agentflow:isDefault a owl:DatatypeProperty ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Marks a gateway outgoing edge as the default/fallback route." .
+
+agentflow:operator a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Comparison operator for gateway condition: ==, >, <, >=, <=." .
+
+agentflow:threshold a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Value to compare against in a gateway condition." .
+
+# ───────────────────────────────────────────────────────────
+# 10. TRANSITION AUDIT PROPERTIES (Turtle-star on followedBy)
+# ───────────────────────────────────────────────────────────
+
+agentflow:followedBy a owl:ObjectProperty ;
+    rdfs:domain agentflow:TaskInstance ;
+    rdfs:range agentflow:TaskInstance ;
+    rdfs:comment "Links task instances in execution order (transition chain)." .
+
+agentflow:transitionedAt a owl:DatatypeProperty ;
+    rdfs:range xsd:dateTime ;
+    rdfs:comment "Timestamp of a task-to-task transition." .
+
+agentflow:triggeredBy a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Identifier of the engine/actor that triggered the transition." .
+
+agentflow:evaluatedVariable a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Name of the variable evaluated at a gateway transition." .
+
+agentflow:evaluatedValue a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Value of the variable at the time of gateway evaluation." .
