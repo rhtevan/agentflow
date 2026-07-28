@@ -1,0 +1,88 @@
+@prefix rdfs:      <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
+@prefix sbpmn:     <http://example.org/ontology/sbpmn#> .
+@prefix sbpmnc:    <http://example.org/ontology/sbpmnc#> .
+@prefix agentflow: <http://example.org/ontology/agentflow#> .
+@prefix cto:       <http://example.org/ontology/cto#> .
+@prefix ex:        <http://example.org/instances/> .
+
+# ═══════════════════════════════════════════════════════════
+# Demo 1: SIM Card Activation — Process Definition (TBox)
+#
+# Process: classify request → severity gateway → escalate
+#          or provision → log completion
+# ═══════════════════════════════════════════════════════════
+
+# ── Process Definition ────────────────────────────────────
+
+ex:ProcDef_SIMActivation a agentflow:AgenticProcess ;
+    rdfs:label "SIM Card Activation Workflow" ;
+    agentflow:engineVersion "0.1.0" ;
+    sbpmn:hasStartEvent ex:Start_SIM ;
+    sbpmn:hasEndEvent ex:End_SIM .
+
+# ── CTO Network Element (Object Under Process) ───────────
+
+ex:HLR_Toronto_01 a cto:HomeLocationRegister ;
+    cto:elementId "HLR-TO-01" ;
+    cto:operationalStatus "ACTIVE" ;
+    cto:vendor "Nokia" ;
+    cto:location "Toronto DC-1" .
+
+# ── Start Event ───────────────────────────────────────────
+
+ex:Start_SIM a sbpmnc:StartEvent ;
+    rdfs:label "SIM Activation Initiated" ;
+    sbpmn:nextTask ex:Task_ClassifyRequest .
+
+# ── Task 1: Classify Request ─────────────────────────────
+
+ex:Task_ClassifyRequest a agentflow:AgenticTask ;
+    rdfs:label "Classify Request" ;
+    agentflow:recipe "classify_request" ;
+    sbpmn:nextTask ex:GW_SeverityCheck .
+
+# ── Gateway: Severity Check (ExclusiveGateway) ───────────
+
+ex:GW_SeverityCheck a sbpmnc:ExclusiveGateway ;
+    rdfs:label "Severity Check" .
+
+# Branch A: severity == "CRITICAL" → escalate
+ex:GW_SeverityCheck sbpmn:nextTask ex:Task_Escalate {|
+    sbpmn:varName   "severity" ;
+    sbpmn:operator  "==" ;
+    sbpmn:threshold "CRITICAL" ;
+    sbpmn:isDefault false
+|} .
+
+# Branch B: default → provision
+ex:GW_SeverityCheck sbpmn:nextTask ex:Task_ProvisionHLR {|
+    sbpmn:isDefault true
+|} .
+
+# ── Task 2a: Escalate Issue ──────────────────────────────
+
+ex:Task_Escalate a agentflow:AgenticTask ;
+    rdfs:label "Escalate Issue" ;
+    agentflow:recipe "escalate_issue" ;
+    sbpmn:nextTask ex:Task_LogCompletion .
+
+# ── Task 2b: Provision HLR ───────────────────────────────
+
+ex:Task_ProvisionHLR a agentflow:AgenticTask ;
+    rdfs:label "Provision Subscriber on HLR" ;
+    agentflow:recipe "provision_hlr" ;
+    cto:targetsNetworkElement ex:HLR_Toronto_01 ;
+    sbpmn:nextTask ex:Task_LogCompletion .
+
+# ── Task 3: Log Completion ───────────────────────────────
+
+ex:Task_LogCompletion a agentflow:AgenticTask ;
+    rdfs:label "Log Completion" ;
+    agentflow:recipe "log_completion" ;
+    sbpmn:nextTask ex:End_SIM .
+
+# ── End Event ─────────────────────────────────────────────
+
+ex:End_SIM a sbpmnc:EndEvent ;
+    rdfs:label "SIM Activation Completed" .

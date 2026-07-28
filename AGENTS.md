@@ -1,0 +1,284 @@
+<!-- agentfs-template-version: 3.7 -->
+# AGENTS.md — Workspace Entry Point
+
+## Quick Orientation
+
+| Resource | Path | What's Inside |
+|----------|------|---------------|
+| Agent identity | [.agents/SOUL.md](./.agents/SOUL.md) | Tone, style, communication defaults |
+| Skills index | \`~/.agents/skills/index.md\` | Signal-based skill routing lookup (read on session start) |
+| Knowledge index | \`~/.agents/knowledge/index.md\` | Cross-project knowledge bundles (USER scope) |
+| Directory index | [.agents/index.md](./.agents/index.md) | Full layer listing |
+| Activity log | [.agents/log.md](./.agents/log.md) | Reverse-chronological change history |
+
+## Signal Routing
+
+When a user expresses a recognized intent signal, the agent MUST
+consult this table before acting. Agent-specific overrides (e.g.,
+agent memory extensions) take priority when present and their tools
+are available.
+
+| Signal / Keyword | Intent | Route To |
+|---|---|---|
+| "remember this", "note that", "keep in mind", "save this for later" | Store project observation | \`.agents/memories/MEMORY.md\` |
+| "always do X", "never do Y", "enforce Z", "this is a rule" | Structural rule/guardrail | Propose as \`AGENTS.md\` guardrail (human approval) |
+| "I prefer", "I like", "my style is" | User preference | \`.agents/memories/USER.md\` |
+| "learn this document", "ingest this file", "add to knowledge base" | Knowledge ingestion | OKF bundle under \`~/.agents/knowledge/\` via \`okf-bundle-gen\` or \`okf-bundle-harvest\` |
+| "forget this", "remove that note" | Delete observation | Edit \`MEMORY.md\`, remove entry |
+| "what do you remember about", "check your notes on" | Retrieve observations | Read \`.agents/memories/MEMORY.md\` |
+| "harvest", "reflect", "scan memories", "graduate patterns" | Extract reusable knowledge | \`skill-harvest\` (procedural) or \`okf-bundle-harvest\` (semantic) |
+| "hey git", "git" | Commit & push USER AgentFS | \`cd ~/.agents\` (or explicit path if specified), stage all, commit, then trigger Guardrail #9 (Git Push Safety) |
+
+For skill-routed signals (e.g., "setup agentfs", "create a skill"),
+the agent discovers skills via the skills listing and
+\`~/.agents/skills/index.md\` — including \`metadata.signals\` in
+SKILL.md frontmatter. Only LLM-direct routes and genuinely ambiguous
+multi-skill triage entries belong in this table.
+
+### Routing Rules
+
+- **Agent-specific overrides take priority.** If the agent has its own
+  decision table (e.g., in persistent instructions), and the referenced
+  tool exists in the current session's available tools, the
+  agent-specific route wins.
+- **Skill signal resolution.** On session start, read
+  \`~/.agents/skills/index.md\` to load the signal-to-skill mapping.
+  When user intent doesn't match an LLM-direct route in the table
+  above, match against the Signals column in the skills index before
+  falling back to default skill name/description matching.
+- **Harvest scans the current project by default.** Scan \`MEMORY.md\`
+  files at \`.agents/memories/\` and \`.agents/profiles/*/memories/\`.
+  Route to \`skill-harvest\` for procedural patterns or
+  \`okf-bundle-harvest\` for declarative/semantic knowledge.
+- **Skill resolution chain.** When the decision table names a skill:
+  try \`load_skill\` by name → tag fallback via \`~/.agents/skills/index.md\`
+  → semantic fallback via descriptions → **fail loud** (do NOT
+  silently improvise when the named skill is missing).
+
+## Guardrail Quick Reference
+
+| # | Rule | Key Action |
+|---|------|------------|
+| [1](#1-progressive-disclosure) | Progressive Disclosure | Browse \`index.md\` first, follow links |
+| [2](#2-memory-scope) | Memory Scope | \`memories/\` is PROJECT-only; experiences not rules |
+| [3](#3-cross-agent-context-discovery) | Cross-Agent Discovery | Check \`CLAUDE.md\`, \`.cursorrules\`, etc. on session start |
+| [4](#4-skill-placement) | Skill Placement | Default to USER \`~/.agents/skills/\` |
+| [5](#5-filesystem-integrity) | Filesystem Integrity | After every \`.agents/\` edit: preserve sections, regenerate index, update changelog, log in both scopes |
+| [6](#6-idempotency) | Idempotency | Same inputs → same state |
+| [7](#7-anti-sycophancy) | Anti-Sycophancy | Quote conflicting guardrail, ask before overriding |
+| [8](#8-checkpoints--resumability) | Checkpoints | Record affected files before destructive ops |
+| [9](#9-git-push-safety) | Git Push Safety | STOP → Scan → Report → WAIT → Push |
+
+## Scope Definitions
+
+AgentFS operates in two scopes. These definitions are canonical —
+all guardrails, skills, and documentation reference them.
+
+| Scope | Root Path | Purpose |
+|-------|-----------|----------|
+| **USER** | `~/.agents/` | Machine-wide shared library: skills and knowledge visible across all projects and agents |
+| **PROJECT** | `./.agents/` | Per-repository agent workspace: identity, profiles, memories, and project-scoped skills |
+
+### What Lives Where
+
+| Resource | USER (`~/.agents/`) | PROJECT (`./.agents/`) |
+|----------|:-------------------:|:----------------------:|
+| `skills/` | ✅ shared | ✅ project-specific |
+| `knowledge/` | ✅ shared | ❌ never |
+| `memories/` | ❌ never | ✅ per-agent |
+| `profiles/` | ❌ never | ✅ multi-agent |
+| `SOUL.md` | ❌ never | ✅ agent identity |
+| `AGENTS.md` | ❌ never | ✅ (at repo root `./`) |
+| `index.md` | ✅ | ✅ |
+| `log.md` | ✅ | ✅ |
+
+## AgentFS Structural Guardrails
+
+These guardrails ensure the consistency and integrity of the AgentFS
+directory structure — both at the project level (`./.agents/`) and the
+user level (`~/.agents/`). Every agent operating in this project
+MUST follow them.
+
+### 1. Progressive Disclosure
+
+- **Browse `index.md` first** before opening individual documents.
+- Use `index.md` files as navigation hubs — they list and describe
+  everything in their directory.
+- Follow links from `index.md` → concept docs → referenced assets,
+  rather than scanning directories directly.
+
+### 2. Memory Scope
+
+- **`memories/` is PROJECT-scoped only.** Memory files (`MEMORY.md`,
+  `USER.md`) live under `./.agents/memories/` (default agent) or
+  `./.agents/profiles/<name>/memories/` (named profiles). There is
+  NO `memories/` directory at USER scope (`~/.agents/`).
+- **`MEMORY.md` records experiences, not rules.** Content belongs in
+  `MEMORY.md` only if it is a concrete, project-specific observation
+  or experience (e.g., "CI breaks when X", "module Y depends on Z").
+  Structural rules and guardrails belong in `AGENTS.md`; user
+  preferences belong in `USER.md`.
+- **Graduation path.** When an observation in `MEMORY.md` matures into
+  cross-project knowledge worth preserving, graduate it to an OKF
+  knowledge bundle under `~/.agents/knowledge/` and remove the
+  original entry.
+
+### 3. Cross-Agent Context Discovery
+
+When starting a session in this project, check for and read these files
+if they exist — treat their content as supplementary project guidelines:
+
+| File | Purpose |
+|------|----------|
+| `CLAUDE.md` or `.claude/CLAUDE.md` | Claude Code project instructions |
+| `.cursorrules` or `.cursor/rules/` | Cursor coding rules |
+| `.windsurfrules` | Windsurf workspace rules |
+| `.github/copilot-instructions.md` | GitHub Copilot project instructions |
+
+If a conflict arises between these files and this `AGENTS.md`, the
+guidelines in `AGENTS.md` take precedence.
+
+### 4. Skill Placement
+
+- **Default to USER.** When the user asks to create a skill without
+  specifying a location or scope, place it under `~/.agents/skills/<skill-name>/`.
+- **Project only when explicit.** Only place a skill under
+  `./.agents/skills/<skill-name>/` when the user specifically says
+  "project skill", "for this project", "local skill", or similar.
+
+### 5. Filesystem Integrity
+
+These rules apply to all `.md` files under `.agents/` in BOTH scopes.
+
+#### Link Integrity
+
+- **No broken links.** Every markdown link in `index.md`, `SKILL.md`,
+  concept docs, and other `.md` files under `.agents/` MUST resolve to
+  an existing file or directory.
+- **No obsolete links.** When a file is renamed, moved, or deleted,
+  update ALL links that reference it.
+- **No missing links.** When a new file or directory is created, add
+  a link to the appropriate `index.md` immediately.
+- **Use `./` prefix** for dot-directory paths (e.g., `./.agents/...`).
+
+#### Log & Changelog Currency
+
+- **Reverse chronological order** — newest entries FIRST (applies to
+  both `log.md` and any `Changelog` section in content files).
+- **ISO 8601 timestamp headings** — `## YYYY-MM-DD HH:MM`.
+- **Log every material change** — file creation, renames, deletions,
+  structural updates.
+- **Insertion anchor.** When appending a new log entry, always insert
+  immediately after the \`<!-- Append-only. Newest entries at top. -->\`
+  comment line — never relative to an existing dated entry.
+- **Never modify or delete** existing log or changelog entries.
+- **Scope:** Each `log.md` MUST only describe changes within its scope
+  (`~/.agents/log.md` for USER, `./.agents/log.md` for PROJECT).
+  When a single action affects both scopes, log in each.
+- **Format:** Title `# Directory Update Log`,
+  comment `<!-- Append-only. Newest entries at top. -->`,
+  headings `## YYYY-MM-DD HH:MM`, entries `- ` (dash prefix).
+
+#### Index Currency
+
+- **`skills/index.md` and `profiles/index.md` MUST stay current.**
+  When a skill or profile is created, renamed, modified, or deleted
+  in either scope, regenerate the corresponding `index.md`.
+- **Use the `skill-index` skill** to regenerate — do NOT manually edit.
+- **Every SKILL.md MUST have `metadata.tags`** in YAML frontmatter
+  (e.g., `tags: [agentfs, memory, harvest]`). A skill without tags
+  is invisible to tag-based discovery.
+- Entries MUST include ISO 8601 timestamps and be sorted newest-first.
+
+#### Post-Edit Completeness
+
+- **Prefer incremental edits over full rewrites** of files under
+  \`.agents/\` — full rewrites risk dropping sections (e.g., rendered
+  Changelog tables, verification checklists).
+- **After modifying any file under \`.agents/\`** (either scope), verify:
+  1. All existing sections in the file are preserved (especially
+     rendered Changelog sections — never drop during rewrites).
+  2. Corresponding \`index.md\` is regenerated if applicable.
+  3. Changes are logged in the appropriate \`log.md\` (both scopes
+     if both are affected by a single action).
+  4. If the change affects AgentFS design, guardrails, skills schema,
+     or template structure, update \`~/.agents/README.md\` in the
+     same session.
+
+### 6. Idempotency
+
+Every skill and automated workflow MUST be idempotent — running it
+twice with the same inputs MUST produce the same filesystem state.
+Skills MUST use existence checks, upsert patterns, and avoid
+append-without-dedup.
+
+### 7. Anti-Sycophancy
+
+When a user request conflicts with an existing guardrail in `AGENTS.md`,
+the agent MUST NOT silently comply. Instead it MUST:
+1. Quote the conflicting guardrail
+2. Explain the conflict
+3. Ask for explicit confirmation before proceeding
+4. If confirmed, log the override in `log.md` with the tag `[OVERRIDE]`
+
+The agent MUST NOT add content to `MEMORY.md` that reads as a rule or
+guardrail (contains "always", "never", "must", "enforce") — such
+content belongs in `AGENTS.md` and requires human approval.
+
+### 8. Checkpoints & Resumability
+
+Before any destructive or multi-step operation (file deletion, bulk
+rename, multi-file edit), the agent MUST create a checkpoint by
+recording affected files and their content hashes in
+`.agents/.checkpoint`. After successful completion, clear the
+checkpoint. If a session starts with a non-empty `.checkpoint`,
+report it and offer to resume or revert.
+
+### 9. Git Push Safety
+
+Before executing any `git push`, the agent MUST follow these steps
+**in order**. No step may be skipped, even if the user says "go ahead".
+
+1. **STOP** — do NOT execute `git push` yet.
+2. **Scan** — run `git diff --cached` (or `git diff` for unstaged) and
+   scan for ALL of the following patterns:
+   - **Secrets/API keys** — `secret`, `api_key`, `apikey`, `password`,
+     `passwd`, `bearer`, `authorization`
+   - **Hardcoded user paths** — `/home/<user>/`, `/Users/<user>/`
+   - **Username leakage** — the current username (`$USER`, `whoami`)
+     appearing in non-path contexts (e.g., in examples, comments,
+     hostnames). Also check for SSH host aliases from `~/.ssh/config`.
+   - **IP addresses** — local interface IPs (`hostname -I`), RFC 1918
+     addresses that appear to be site-specific
+   - **Sensitive URLs** — internal hostnames, intranet URLs
+   - **PII** — email addresses, phone numbers, real names embedded
+     in code or documentation examples
+3. **Report** — present a Pre-Push Security Report table showing each
+   check category with ✅ Clean or ⚠️ FOUND status, plus a verdict.
+4. **README Staleness Check** (soft gate) — if the commit touches
+   `skills/`, `knowledge/`, or guardrail-related files, append a
+   notice to the report:
+   ```
+   📝 README Notice: This commit adds/modifies skills or knowledge.
+      Consider updating README.md. Update now? [y/n/skip]
+   ```
+   - **y** — propose README edits, user reviews, amend the commit
+   - **n / skip** — proceed without updating (no override logging
+     needed — this is advisory, not a hard gate)
+5. **WAIT** — do NOT proceed until the user explicitly responds.
+6. **Push** — only after explicit approval, execute `git push`.
+
+If the user acknowledges issues but still requests the push, log the
+override in `log.md` with `[OVERRIDE]` per Guardrail #7.
+
+<!-- PROJECT-OWNED sections below. Everything above is template-owned
+     and will be overwritten by agentfs-setup --sync. -->
+
+## Agent Profiles
+
+| Agent | Identity | Memories |
+|-------|----------|----------|
+| default | [SOUL](./.agents/SOUL.md) | [memories/](./.agents/memories/MEMORY.md) |
+
+<!-- SPECKIT START -->
+<!-- SPECKIT END -->

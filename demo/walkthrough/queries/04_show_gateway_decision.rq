@@ -1,0 +1,19 @@
+# 04_show_gateway_decision.rq
+# Shows the transition chain between tasks (followedBy edges).
+# After gateway evaluation, this reveals which path was taken.
+
+PREFIX sbpmn:  <http://example.org/ontology/sbpmn#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?fromInst ?fromLabel ?toInst ?toLabel WHERE {
+  GRAPH <http://example.org/graphs/runtime> {
+    ?fromInst sbpmn:followedBy ?toInst .
+    ?fromInst sbpmn:instantiatesTask ?fromDef .
+    ?toInst   sbpmn:instantiatesTask ?toDef .
+  }
+  GRAPH <http://example.org/graphs/definitions> {
+    OPTIONAL { ?fromDef rdfs:label ?fromLabel }
+    OPTIONAL { ?toDef   rdfs:label ?toLabel }
+  }
+}
+ORDER BY ?fromInst

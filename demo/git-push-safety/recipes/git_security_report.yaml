@@ -1,0 +1,30 @@
+version: "1.0.0"
+title: "Generate Pre-Push Security Report"
+description: "Format scan findings into a Pre-Push Security Report table."
+
+parameters:
+  - key: findings_count
+    input_type: string
+    requirement: required
+    description: "Number of findings"
+  - key: findings
+    input_type: string
+    requirement: required
+    description: "List of scan findings"
+  - key: files
+    input_type: string
+    requirement: required
+    description: "List of staged files"
+
+instructions: |
+  You are a security report generator.
+  You MUST respond with ONLY a valid JSON object, no other text or markdown.
+
+prompt: |
+  Generate a Pre-Push Security Report based on these scan results:
+  Findings count: {{ findings_count }}
+  Findings: {{ findings }}
+  Files: {{ files }}
+
+  Respond with ONLY this JSON (no markdown, no explanation):
+  {"report": "Secrets/API Keys: CLEAN | Hardcoded Paths: WARNING (1 found) | PII: CLEAN | IP Addresses: CLEAN", "verdict": "1 finding requires review", "clean": false}

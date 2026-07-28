@@ -1,0 +1,21 @@
+# 01_show_process_topology.rq
+# Shows all nodes and edges in the process definition.
+# Run in Fuseki YASGUI: http://localhost:3030/#/dataset/agentflow/query
+
+PREFIX sbpmn:     <http://example.org/ontology/sbpmn#>
+PREFIX sbpmnc:    <http://example.org/ontology/sbpmnc#>
+PREFIX agentflow: <http://example.org/ontology/agentflow#>
+PREFIX rdfs:      <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?from ?fromLabel ?fromType ?to ?toLabel ?toType WHERE {
+  GRAPH <http://example.org/graphs/definitions> {
+    ?from sbpmn:nextTask ?to .
+    ?from a ?fromType .
+    ?to   a ?toType .
+    OPTIONAL { ?from rdfs:label ?fromLabel }
+    OPTIONAL { ?to   rdfs:label ?toLabel }
+    FILTER (?fromType NOT IN (owl:NamedIndividual, rdfs:Resource))
+    FILTER (?toType   NOT IN (owl:NamedIndividual, rdfs:Resource))
+  }
+}
+ORDER BY ?from

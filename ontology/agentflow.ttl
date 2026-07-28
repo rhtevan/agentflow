@@ -1,0 +1,157 @@
+@prefix owl:       <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:      <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
+@prefix sbpmn:     <http://example.org/ontology/sbpmn#> .
+@prefix sbpmnc:    <http://example.org/ontology/sbpmnc#> .
+@prefix agentflow: <http://example.org/ontology/agentflow#> .
+
+# ═══════════════════════════════════════════════════════════
+# AgentFLOW Ontology — Graph-Driven Agent Orchestration
+#
+# Extensions to sBPMN for LLM-based agentic workflows.
+# Defines AgenticTask (the universal task type executed by
+# Goose recipes) and GuardrailGateway (enforcement checkpoint
+# with optional human-in-the-loop approval).
+# ═══════════════════════════════════════════════════════════
+
+# ───────────────────────────────────────────────────────────
+# 1. CLASSES
+# ───────────────────────────────────────────────────────────
+
+agentflow:AgenticProcess rdfs:subClassOf sbpmn:ProcessDefinition ;
+    rdfs:label "Agentic Process" ;
+    rdfs:comment """A process definition where tasks are executed by LLM agents
+    via Goose recipes. Each task runs in a fresh, isolated context
+    window (Ralph Loop pattern). The graph topology enforces step
+    ordering and mandatory checkpoints — not the model's judgment.""" .
+
+agentflow:AgenticTask rdfs:subClassOf sbpmnc:Task ;
+    rdfs:label "Agentic Task" ;
+    rdfs:comment """A task executed by an LLM agent in a fresh, isolated context.
+    The agent receives structured parameters (extracted from the ABox),
+    follows recipe instructions, and produces structured JSON output.
+    
+    Unlike UserTask: the agent has no persistent memory across tasks.
+    Unlike ScriptTask: the output is non-deterministic.
+    Unlike ServiceTask: the executor exercises judgment.
+    
+    This is a new kind of task that BPMN did not anticipate — a
+    stateless, recipe-driven, non-deterministic actor.""" .
+
+agentflow:GuardrailGateway rdfs:subClassOf sbpmnc:ComplexGateway ;
+    rdfs:label "Guardrail Gateway" ;
+    rdfs:comment """A complex gateway that enforces safety or compliance
+    constraints in an agentic workflow. Supports two evaluation modes:
+
+    Mode 1 — Self-Evaluation (requiresApproval = false):
+      Behaves like an ExclusiveGateway. Evaluates ABox variables
+      against edge conditions immediately.
+
+    Mode 2 — Human-in-the-Loop (requiresApproval = true):
+      Pauses execution, polls for an external approval variable in
+      the ABox, then evaluates conditions once the variable arrives.
+      Supports configurable timeout via agentflow:approvalTimeout,
+      defaulting to DENIED on expiry.
+
+    In both modes, the GuardrailGateway represents a mandatory
+    checkpoint that the process token MUST traverse. The graph
+    topology enforces this — there is no sequence flow edge that
+    bypasses the gateway.""" .
+
+agentflow:ParamMapping a owl:Class ;
+    rdfs:label "Parameter Mapping" ;
+    rdfs:comment "Maps ABox process variables to Goose recipe input parameters." .
+
+agentflow:OutputMapping a owl:Class ;
+    rdfs:label "Output Mapping" ;
+    rdfs:comment "Maps Goose recipe JSON output keys back to ABox process variables." .
+
+# ───────────────────────────────────────────────────────────
+# 2. TASK PROPERTIES
+# ───────────────────────────────────────────────────────────
+
+agentflow:recipe a owl:DatatypeProperty ;
+    rdfs:domain agentflow:AgenticTask ;
+    rdfs:range xsd:string ;
+    rdfs:label "recipe" ;
+    rdfs:comment "Name of the Goose recipe file (without .yaml extension)." .
+
+agentflow:maxRetries a owl:DatatypeProperty ;
+    rdfs:domain agentflow:AgenticTask ;
+    rdfs:range xsd:integer ;
+    rdfs:label "max retries" ;
+    rdfs:comment "Maximum number of retry attempts on LLM failure. Default: 0." .
+
+agentflow:timeoutSeconds a owl:DatatypeProperty ;
+    rdfs:domain agentflow:AgenticTask ;
+    rdfs:range xsd:integer ;
+    rdfs:label "timeout seconds" ;
+    rdfs:comment "Maximum execution time in seconds before forced failure." .
+
+agentflow:hasParamMapping a owl:ObjectProperty ;
+    rdfs:domain agentflow:AgenticTask ;
+    rdfs:range agentflow:ParamMapping ;
+    rdfs:label "has parameter mapping" .
+
+agentflow:hasOutputMapping a owl:ObjectProperty ;
+    rdfs:domain agentflow:AgenticTask ;
+    rdfs:range agentflow:OutputMapping ;
+    rdfs:label "has output mapping" .
+
+# ───────────────────────────────────────────────────────────
+# 3. MAPPING PROPERTIES
+# ───────────────────────────────────────────────────────────
+
+agentflow:paramSource a owl:DatatypeProperty ;
+    rdfs:domain agentflow:ParamMapping ;
+    rdfs:range xsd:string ;
+    rdfs:label "parameter source" ;
+    rdfs:comment "The sbpmn:varName in the ABox to read from." .
+
+agentflow:paramTarget a owl:DatatypeProperty ;
+    rdfs:domain agentflow:ParamMapping ;
+    rdfs:range xsd:string ;
+    rdfs:label "parameter target" ;
+    rdfs:comment "The key name in the recipe params.json." .
+
+agentflow:outputSource a owl:DatatypeProperty ;
+    rdfs:domain agentflow:OutputMapping ;
+    rdfs:range xsd:string ;
+    rdfs:label "output source" ;
+    rdfs:comment "The key name in the Goose recipe JSON output." .
+
+agentflow:outputTarget a owl:DatatypeProperty ;
+    rdfs:domain agentflow:OutputMapping ;
+    rdfs:range xsd:string ;
+    rdfs:label "output target" ;
+    rdfs:comment "The sbpmn:varName to write to in the ABox." .
+
+# ───────────────────────────────────────────────────────────
+# 4. GATEWAY PROPERTIES
+# ───────────────────────────────────────────────────────────
+
+agentflow:requiresApproval a owl:DatatypeProperty ;
+    rdfs:domain agentflow:GuardrailGateway ;
+    rdfs:range xsd:boolean ;
+    rdfs:label "requires approval" ;
+    rdfs:comment """When true, the engine enters polling mode and waits for
+    an external actor to inject the evaluation variable into the ABox.
+    When false, the engine evaluates immediately like an ExclusiveGateway.""" .
+
+agentflow:approvalTimeout a owl:DatatypeProperty ;
+    rdfs:domain agentflow:GuardrailGateway ;
+    rdfs:range xsd:dayTimeDuration ;
+    rdfs:label "approval timeout" ;
+    rdfs:comment """Maximum wait time for human approval. If exceeded, the
+    engine auto-injects a DENIED value and routes accordingly.
+    Only applicable when requiresApproval = true. Default: PT1H.""" .
+
+# ───────────────────────────────────────────────────────────
+# 5. PROCESS PROPERTIES
+# ───────────────────────────────────────────────────────────
+
+agentflow:engineVersion a owl:DatatypeProperty ;
+    rdfs:domain agentflow:AgenticProcess ;
+    rdfs:range xsd:string ;
+    rdfs:label "engine version" ;
+    rdfs:comment "Minimum AgentFLOW engine version required to execute this process." .

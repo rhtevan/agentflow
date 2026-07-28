@@ -1,0 +1,67 @@
+@prefix sh:        <http://www.w3.org/ns/shacl#> .
+@prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
+@prefix sbpmn:     <http://example.org/ontology/sbpmn#> .
+@prefix sbpmnc:    <http://example.org/ontology/sbpmnc#> .
+@prefix cto:       <http://example.org/ontology/cto#> .
+@prefix ex:        <http://example.org/shapes/> .
+
+# ═══════════════════════════════════════════════════════════
+# SHACL Shapes — CTO Network Element Constraints
+#
+# Ensures that tasks targeting CTO network elements can only
+# execute against elements with ACTIVE operational status.
+# This is the pre-flight validation gate that prevents
+# provisioning on decommissioned or maintenance equipment.
+# ═══════════════════════════════════════════════════════════
+
+# ───────────────────────────────────────────────────────────
+# 1. NetworkElement must have an elementId and status
+# ───────────────────────────────────────────────────────────
+
+ex:NetworkElementShape a sh:NodeShape ;
+    sh:targetClass cto:NetworkElement ;
+    sh:property [
+        sh:path cto:elementId ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "NetworkElement must have an elementId." ;
+    ] ;
+    sh:property [
+        sh:path cto:operationalStatus ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:in ( "ACTIVE" "MAINTENANCE" "DECOMMISSIONED" ) ;
+        sh:message "NetworkElement must have a valid operationalStatus." ;
+    ] .
+
+# ───────────────────────────────────────────────────────────
+# 2. Tasks targeting a NetworkElement must target an ACTIVE one
+# ───────────────────────────────────────────────────────────
+
+ex:ActiveTargetConstraint a sh:NodeShape ;
+    sh:target [
+        a sh:SPARQLTarget ;
+        sh:select """
+            PREFIX cto: <http://example.org/ontology/cto#>
+            PREFIX sbpmnc: <http://example.org/ontology/sbpmnc#>
+            SELECT ?this WHERE {
+                ?this a sbpmnc:Task ;
+                      cto:targetsNetworkElement ?node .
+            }
+        """ ;
+    ] ;
+    sh:sparql [
+        sh:message "Task targets a NetworkElement that is not ACTIVE." ;
+        sh:select """
+            PREFIX cto: <http://example.org/ontology/cto#>
+            SELECT $this (cto:targetsNetworkElement AS ?path)
+                   (?status AS ?value)
+            WHERE {
+                $this cto:targetsNetworkElement ?node .
+                ?node cto:operationalStatus ?status .
+                FILTER (?status != "ACTIVE")
+            }
+        """ ;
+    ] .

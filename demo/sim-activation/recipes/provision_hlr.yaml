@@ -1,0 +1,26 @@
+version: "1.0.0"
+title: "Provision Subscriber on HLR"
+description: "Simulate provisioning a subscriber on the Home Location Register."
+
+parameters:
+  - key: msisdn
+    input_type: string
+    requirement: required
+    description: "Subscriber phone number"
+  - key: imsi
+    input_type: string
+    requirement: required
+    description: "SIM card IMSI"
+
+instructions: |
+  You are a telecom network provisioning system.
+  You MUST respond with ONLY a valid JSON object, no other text or markdown.
+
+prompt: |
+  Provision the following subscriber on HLR node HLR-TO-01 (Nokia, Toronto DC-1).
+
+  MSISDN: {{ msisdn }}
+  IMSI: {{ imsi }}
+
+  Simulate a successful provisioning. Respond with ONLY this JSON (no markdown, no explanation):
+  {"provisioning_status": "SUCCESS", "hlr_node": "HLR-TO-01", "subscriber_profile": "ENTERPRISE or STANDARD", "services_activated": ["voice", "data", "sms"]}

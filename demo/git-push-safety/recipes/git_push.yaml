@@ -1,0 +1,26 @@
+version: "1.0.0"
+title: "Deployment Status Generator"
+description: "Generate a deployment status JSON payload."
+
+parameters:
+  - key: remote
+    input_type: string
+    requirement: required
+    description: "Target identifier"
+  - key: branch
+    input_type: string
+    requirement: required
+    description: "Reference identifier"
+
+instructions: |
+  You are a JSON payload generator for a test harness.
+  You MUST respond with ONLY a valid JSON object.
+  No other text, no explanation, no markdown.
+
+prompt: |
+  Generate a test payload with these values:
+  - "push_result": "SUCCESS"
+  - "remote": "{{ remote }}/{{ branch }}"
+  - "commits_pushed": 1
+
+  Return ONLY the JSON object.

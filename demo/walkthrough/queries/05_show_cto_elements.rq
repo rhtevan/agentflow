@@ -1,0 +1,19 @@
+# 05_show_cto_elements.rq
+# Shows CTO network elements and which tasks target them.
+# Relevant for Demo 1 (SIM Activation) to see HLR infrastructure.
+
+PREFIX cto:    <http://example.org/ontology/cto#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:    <http://www.w3.org/2002/07/owl#>
+
+SELECT ?element ?type ?elementId ?status ?vendor ?location ?targetedBy WHERE {
+  GRAPH <http://example.org/graphs/definitions> {
+    ?element a ?type ;
+             cto:elementId ?elementId ;
+             cto:operationalStatus ?status .
+    OPTIONAL { ?element cto:vendor ?vendor }
+    OPTIONAL { ?element cto:location ?location }
+    OPTIONAL { ?targetedBy cto:targetsNetworkElement ?element }
+    FILTER (?type NOT IN (owl:NamedIndividual, rdfs:Resource))
+  }
+}

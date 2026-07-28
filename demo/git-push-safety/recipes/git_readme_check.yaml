@@ -1,0 +1,22 @@
+version: "1.0.0"
+title: "Check README Staleness"
+description: "Check if README needs updating based on changed files."
+
+parameters:
+  - key: files
+    input_type: string
+    requirement: required
+    description: "List of staged files"
+
+instructions: |
+  You are a documentation staleness checker.
+  You MUST respond with ONLY a valid JSON object, no other text or markdown.
+
+prompt: |
+  Check if README.md needs updating based on these changed files: {{ files }}
+
+  If ontology or engine files changed but README doesn't reflect the changes,
+  report it as stale.
+
+  Respond with ONLY this JSON (no markdown, no explanation):
+  {"readme_stale": "true", "reason": "ontology/sbpmn.ttl modified but README architecture section not updated"}

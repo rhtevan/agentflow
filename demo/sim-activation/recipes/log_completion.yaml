@@ -1,0 +1,38 @@
+version: "1.0.0"
+title: "Log SIM Activation Completion"
+description: "Generate an audit log entry for the completed SIM activation process."
+
+parameters:
+  - key: msisdn
+    input_type: string
+    requirement: required
+    description: "Subscriber phone number"
+  - key: imsi
+    input_type: string
+    requirement: required
+    description: "SIM card IMSI"
+  - key: severity
+    input_type: string
+    requirement: optional
+    default: "LOW"
+    description: "Classified severity"
+  - key: reason
+    input_type: string
+    requirement: optional
+    default: "standard processing"
+    description: "Classification reason"
+
+instructions: |
+  You are a telecom audit logging system.
+  You MUST respond with ONLY a valid JSON object, no other text or markdown.
+
+prompt: |
+  Generate a completion audit record for the following SIM activation.
+
+  MSISDN: {{ msisdn }}
+  IMSI: {{ imsi }}
+  Severity: {{ severity }}
+  Reason: {{ reason }}
+
+  Respond with ONLY this JSON (no markdown, no explanation):
+  {"audit_record": "human-readable summary", "completion_status": "SUCCESS", "timestamp": "2026-07-28T14:30:00Z"}

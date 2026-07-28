@@ -1,0 +1,48 @@
+# Directory Update Log
+
+<!-- Append-only. Newest entries at top. -->
+
+## 2026-07-28 11:05
+- Phase 3 complete: documentation, walkthrough, and packaging
+- Created README.md (project overview, quick start, architecture)
+- Created docs/architecture.md (engine loop, TBox/ABox, class hierarchy)
+- Created docs/decisions.md (9 consolidated design decisions)
+- Created demo/walkthrough/README.md (GUI walkthrough guide)
+- Created 6 SPARQL walkthrough queries (topology, token, history, gateway, CTO, variables)
+- Created demo/sim-activation/README.md and demo/git-push-safety/README.md
+- Created scripts/check_prerequisites.sh and scripts/cleanup.sh
+- Created Makefile with 7 targets (check, load, validate, clean, demo-telecom, demo-git-push, approve)
+- Created VERSION (0.1.0), LICENSE
+- Updated .gitignore (engine/config.env, temp files)
+
+## 2026-07-28 10:30
+- Phase 2 complete: engine core + both demos passing end-to-end
+- Created engine/orchestrate.sh (main engine loop with SPARQL polling)
+- Created engine/config.env.example
+- Created 4 SIM Activation recipes (classify, escalate, provision, log)
+- Created 6 Git Push Safety recipes (stage, scan, report, readme, push, log)
+- Demo 1 (SIM Activation): CRITICAL path runs end-to-end
+- Demo 2 (Git Push Safety): approval gateway + human-in-the-loop working
+
+## 2026-07-28 10:15
+- Phase 1 complete: ontology files created and validated
+- Created ontology/sbpmn.ttl (minimal sBPMN subset — 223 lines)
+- Created ontology/cto.ttl (minimal CTO for Demo 1 — 67 lines)
+- Created ontology/agentflow.ttl (AgentFLOW extensions — 157 lines)
+- Created ontology/shapes/process_shapes.ttl (SHACL process constraints)
+- Created ontology/shapes/cto_shapes.ttl (SHACL CTO constraints)
+- Created scripts/load_ontology.sh
+- All 5 .ttl files pass riot --validate
+
+## 2026-07-27 18:54
+
+- Created AGENTS.md at project root.
+
+## 2026-07-25 23:53
+- Renamed project directory from `agentctl` to `agentflow` (AgentFLOW / agent-flow).
+- Populated SOUL.md with AgentFLOW project identity and agent-x trilogy context.
+
+## 2026-07-25 23:23
+- Created AGENTS.md at project root.
+
+- Initialized .agents/ directory structure (mode: project).

@@ -1,0 +1,21 @@
+# 03_show_task_history.rq
+# Shows all completed and running task instances with their outputs.
+# Run after the engine finishes to see the full execution trail.
+
+PREFIX sbpmn:  <http://example.org/ontology/sbpmn#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?taskInst ?taskLabel ?status ?startTime ?endTime ?output WHERE {
+  GRAPH <http://example.org/graphs/runtime> {
+    ?taskInst a sbpmn:TaskInstance ;
+              sbpmn:instantiatesTask ?taskDef ;
+              sbpmn:taskStatus ?status .
+    OPTIONAL { ?taskInst sbpmn:startTime ?startTime }
+    OPTIONAL { ?taskInst sbpmn:endTime ?endTime }
+    OPTIONAL { ?taskInst sbpmn:taskOutput ?output }
+  }
+  GRAPH <http://example.org/graphs/definitions> {
+    OPTIONAL { ?taskDef rdfs:label ?taskLabel }
+  }
+}
+ORDER BY ?startTime

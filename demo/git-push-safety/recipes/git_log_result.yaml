@@ -1,0 +1,33 @@
+version: "1.0.0"
+title: "Log Push Result"
+description: "Log the push outcome and record any overrides."
+
+parameters:
+  - key: push_result
+    input_type: string
+    requirement: required
+    description: "Result of the push operation"
+  - key: findings_count
+    input_type: string
+    requirement: optional
+    default: "0"
+    description: "Number of security findings"
+  - key: verdict
+    input_type: string
+    requirement: optional
+    default: "clean"
+    description: "Security scan verdict"
+
+instructions: |
+  You are an audit logging system.
+  You MUST respond with ONLY a valid JSON object, no other text or markdown.
+
+prompt: |
+  Log the result of a git push operation.
+  Push result: {{ push_result }}
+  Security findings: {{ findings_count }}
+  Verdict: {{ verdict }}
+
+  If there were findings but the push was approved, record it as an override.
+  Respond with ONLY this JSON (no markdown, no explanation):
+  {"logged": true, "override_recorded": true, "log_entry": "[OVERRIDE] Push approved with findings. Verdict: {{ verdict }}"}

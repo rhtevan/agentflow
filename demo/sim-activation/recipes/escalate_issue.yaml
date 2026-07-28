@@ -1,0 +1,36 @@
+version: "1.0.0"
+title: "Escalate Critical SIM Issue"
+description: "Generate an escalation ticket for a critical SIM activation request."
+
+parameters:
+  - key: msisdn
+    input_type: string
+    requirement: required
+    description: "Subscriber phone number"
+  - key: imsi
+    input_type: string
+    requirement: required
+    description: "SIM card IMSI"
+  - key: severity
+    input_type: string
+    requirement: required
+    description: "Classified severity"
+  - key: reason
+    input_type: string
+    requirement: required
+    description: "Classification reason"
+
+instructions: |
+  You are a telecom operations escalation handler.
+  You MUST respond with ONLY a valid JSON object, no other text or markdown.
+
+prompt: |
+  A SIM activation request has been classified as CRITICAL and requires escalation.
+
+  MSISDN: {{ msisdn }}
+  IMSI: {{ imsi }}
+  Severity: {{ severity }}
+  Reason: {{ reason }}
+
+  Generate an escalation ticket. Respond with ONLY this JSON (no markdown, no explanation):
+  {"escalation_ticket_id": "ESC-YYYYMMDD-NNN", "escalation_priority": "P1 or P2", "assigned_team": "team name", "summary": "brief summary"}

@@ -1,0 +1,15 @@
+# 06_show_process_variables.rq
+# Shows all process variables accumulated during execution.
+# Run after each task to see how the ABox state grows.
+
+PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+
+SELECT ?process ?varName ?varValue WHERE {
+  GRAPH <http://example.org/graphs/runtime> {
+    ?process a sbpmn:ProcessInstance ;
+             sbpmn:hasVariable ?var .
+    ?var sbpmn:varName ?varName ;
+         sbpmn:varValue ?varValue .
+  }
+}
+ORDER BY ?process ?varName

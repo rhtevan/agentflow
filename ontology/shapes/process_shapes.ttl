@@ -1,0 +1,127 @@
+@prefix sh:        <http://www.w3.org/ns/shacl#> .
+@prefix owl:       <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
+@prefix sbpmn:     <http://example.org/ontology/sbpmn#> .
+@prefix sbpmnc:    <http://example.org/ontology/sbpmnc#> .
+@prefix agentflow: <http://example.org/ontology/agentflow#> .
+@prefix ex:        <http://example.org/shapes/> .
+
+# ═══════════════════════════════════════════════════════════
+# SHACL Shapes — Process Structure Constraints
+#
+# These shapes validate both TBox (process definitions) and
+# ABox (runtime instances) to ensure structural integrity
+# before and during process execution.
+# ═══════════════════════════════════════════════════════════
+
+# ───────────────────────────────────────────────────────────
+# 1. AgenticTask must have a recipe
+# ───────────────────────────────────────────────────────────
+
+ex:AgenticTaskShape a sh:NodeShape ;
+    sh:targetClass agentflow:AgenticTask ;
+    sh:property [
+        sh:path agentflow:recipe ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "Every AgenticTask must have exactly one agentflow:recipe." ;
+    ] .
+
+# ───────────────────────────────────────────────────────────
+# 2. ProcessInstance must have a status and link to a process
+# ───────────────────────────────────────────────────────────
+
+ex:ProcessInstanceShape a sh:NodeShape ;
+    sh:targetClass sbpmn:ProcessInstance ;
+    sh:property [
+        sh:path sbpmn:processStatus ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:in ( "RUNNING" "COMPLETED" "FAILED" "ABORTED" ) ;
+        sh:message "ProcessInstance must have a valid processStatus." ;
+    ] ;
+    sh:property [
+        sh:path sbpmn:instantiatesProcess ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "ProcessInstance must link to a ProcessDefinition." ;
+    ] .
+
+# ───────────────────────────────────────────────────────────
+# 3. Running ProcessInstance must have a currentTask
+# ───────────────────────────────────────────────────────────
+
+ex:RunningProcessShape a sh:NodeShape ;
+    sh:target [
+        a sh:SPARQLTarget ;
+        sh:select """
+            PREFIX sbpmn: <http://example.org/ontology/sbpmn#>
+            SELECT ?this WHERE {
+                ?this a sbpmn:ProcessInstance ;
+                      sbpmn:processStatus "RUNNING" .
+            }
+        """ ;
+    ] ;
+    sh:property [
+        sh:path sbpmn:currentTask ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class sbpmn:TaskInstance ;
+        sh:message "A RUNNING ProcessInstance must have exactly one currentTask." ;
+    ] .
+
+# ───────────────────────────────────────────────────────────
+# 4. TaskInstance must link to a task definition
+# ───────────────────────────────────────────────────────────
+
+ex:TaskInstanceShape a sh:NodeShape ;
+    sh:targetClass sbpmn:TaskInstance ;
+    sh:property [
+        sh:path sbpmn:instantiatesTask ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "TaskInstance must link to a task definition via instantiatesTask." ;
+    ] ;
+    sh:property [
+        sh:path sbpmn:taskStatus ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:in ( "PENDING" "RUNNING" "COMPLETED" "FAILED" ) ;
+        sh:message "TaskInstance must have a valid taskStatus." ;
+    ] .
+
+# ───────────────────────────────────────────────────────────
+# 5. GuardrailGateway must declare requiresApproval
+# ───────────────────────────────────────────────────────────
+
+ex:GuardrailGatewayShape a sh:NodeShape ;
+    sh:targetClass agentflow:GuardrailGateway ;
+    sh:property [
+        sh:path agentflow:requiresApproval ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean ;
+        sh:message "GuardrailGateway must declare requiresApproval (true/false)." ;
+    ] .
+
+# ───────────────────────────────────────────────────────────
+# 6. ProcessVariable must have a name and value
+# ───────────────────────────────────────────────────────────
+
+ex:ProcessVariableShape a sh:NodeShape ;
+    sh:targetClass sbpmn:ProcessVariable ;
+    sh:property [
+        sh:path sbpmn:varName ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "ProcessVariable must have a varName." ;
+    ] ;
+    sh:property [
+        sh:path sbpmn:varValue ;
+        sh:minCount 1 ;
+        sh:message "ProcessVariable must have a varValue." ;
+    ] .

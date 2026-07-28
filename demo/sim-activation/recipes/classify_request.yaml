@@ -1,0 +1,36 @@
+version: "1.0.0"
+title: "Classify SIM Activation Request"
+description: "Analyze a SIM activation request and classify its severity."
+
+parameters:
+  - key: msisdn
+    input_type: string
+    requirement: required
+    description: "Subscriber phone number"
+  - key: imsi
+    input_type: string
+    requirement: required
+    description: "SIM card IMSI"
+  - key: request_text
+    input_type: string
+    requirement: required
+    description: "Activation request description"
+
+instructions: |
+  You are a telecom operations classifier.
+  You MUST respond with ONLY a valid JSON object, no other text or markdown.
+
+prompt: |
+  Classify the following SIM activation request.
+
+  MSISDN: {{ msisdn }}
+  IMSI: {{ imsi }}
+  Request: {{ request_text }}
+
+  Classification rules:
+  - CRITICAL: Enterprise/priority accounts, SLA-bound requests, executive devices,
+    urgent provisioning, high-value customers
+  - LOW: Standard consumer activations, routine provisioning, no urgency indicators
+
+  Respond with ONLY this JSON (no markdown, no explanation):
+  {"severity": "CRITICAL or LOW", "reason": "brief explanation"}
