@@ -8,6 +8,7 @@ Thumbs.db
 *~
 .idea/
 .vscode/
+.obsidian/
 
 # Agent checkpoint files (eval-managed, transient)
 .agents/.checkpoint
