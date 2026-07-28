@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentFLOW Process Visualizer</title>
+    <script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: #e0e0e0; }
+        
+        .header { background: #16213e; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #0f3460; }
+        .header h1 { font-size: 18px; color: #e94560; }
+        .header .subtitle { font-size: 12px; color: #888; margin-left: 12px; }
+        
+        .controls { display: flex; gap: 12px; align-items: center; }
+        .controls select, .controls button { padding: 6px 12px; border-radius: 4px; border: 1px solid #0f3460; background: #16213e; color: #e0e0e0; font-size: 13px; cursor: pointer; }
+        .controls button { background: #0f3460; }
+        .controls button:hover { background: #e94560; }
+        .controls button.active { background: #e94560; }
+        .controls .status { font-size: 12px; color: #888; }
+        
+        .main { display: flex; height: calc(100vh - 48px); }
+        
+        #cy { flex: 1; background: #1a1a2e; }
+        
+        .sidebar { width: 340px; background: #16213e; border-left: 1px solid #0f3460; overflow-y: auto; padding: 16px; }
+        .sidebar h2 { font-size: 14px; color: #e94560; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .sidebar .section { margin-bottom: 20px; }
+        .sidebar .field { margin-bottom: 8px; }
+        .sidebar .field-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sidebar .field-value { font-size: 13px; color: #e0e0e0; word-break: break-all; }
+        .sidebar .field-value.status-running { color: #ffd700; }
+        .sidebar .field-value.status-completed { color: #4caf50; }
+        .sidebar .field-value.status-pending { color: #888; }
+        
+        .sidebar .json-output { background: #1a1a2e; border: 1px solid #0f3460; border-radius: 4px; padding: 8px; font-family: monospace; font-size: 11px; color: #4caf50; max-height: 200px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+        
+        .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
+        
+        .var-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .var-table th { text-align: left; color: #888; font-weight: normal; padding: 4px 8px; border-bottom: 1px solid #0f3460; }
+        .var-table td { padding: 4px 8px; border-bottom: 1px solid #0f3460; }
+        .var-table td:first-child { color: #e94560; font-family: monospace; }
+        
+        .loading { display: flex; align-items: center; justify-content: center; height: 100%; color: #888; font-size: 16px; }
+        .error { color: #e94560; padding: 16px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="display:flex;align-items:baseline">
+            <h1>AgentFLOW</h1>
+            <span class="subtitle">Process Visualizer</span>
+        </div>
+        <div class="controls">
+            <select id="viewMode">
+                <option value="process">Process Flow</option>
+                <option value="ontology">Ontology Classes</option>
+            </select>
+            <button id="btnRefresh" title="Refresh">⟳ Refresh</button>
+            <button id="btnPoll" title="Auto-poll runtime state">▶ Auto-Poll</button>
+            <span class="status" id="statusText">Ready</span>
+        </div>
+    </div>
+    <div class="main">
+        <div id="cy"><div class="loading" id="loadingMsg">Connecting to Fuseki...</div></div>
+        <div class="sidebar">
+            <div class="section">
+                <h2>Legend</h2>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background:#4caf50"></div> StartEvent</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#f44336"></div> EndEvent</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#2196f3"></div> AgenticTask</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#ff9800"></div> ExclusiveGateway</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#e94560"></div> GuardrailGateway</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#ffd700;border:2px solid #ffd700"></div> Active Token</div>
+                </div>
+            </div>
+            <div class="section" id="nodeDetails">
+                <h2>Node Details</h2>
+                <p style="font-size:12px;color:#888">Click a node to inspect</p>
+            </div>
+            <div class="section" id="processVars">
+                <h2>Process Variables</h2>
+                <p style="font-size:12px;color:#888">Load a demo to see variables</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ══════════════════════════════════════════════════════
+    // Configuration
+    // ══════════════════════════════════════════════════════
+    const FUSEKI_URL = 'http://localhost:3030';
+    const DATASET = 'agentflow';
+    const QUERY_URL = `${FUSEKI_URL}/${DATASET}/sparql`;
+    const DEF_GRAPH = 'http://example.org/graphs/definitions';
+    const RT_GRAPH = 'http://example.org/graphs/runtime';
+
+    const PREFIXES = `
+        PREFIX sbpmnc:    <https://sBPMN.github.io/2.0/classes#>
+        PREFIX sbpmnp:    <https://sBPMN.github.io/2.0/properties#>
+        PREFIX agentflow: <http://example.org/ontology/agentflow#>
+        PREFIX cto:       <https://github.com/Point-Topic/cto-ontology/>
+        PREFIX rdfs:      <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX owl:       <http://www.w3.org/2002/07/owl#>
+    `;
+
+    let cy = null;
+    let pollInterval = null;
+
+    // ══════════════════════════════════════════════════════
+    // SPARQL Query Helper
+    // ══════════════════════════════════════════════════════
+    async function sparqlQuery(query) {
+        const resp = await fetch(QUERY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/sparql-query', 'Accept': 'application/sparql-results+json' },
+            body: query
+        });
+        if (!resp.ok) throw new Error(`SPARQL error: ${resp.status}`);
+        return resp.json();
+    }
+
+    function shortUri(uri) {
+        if (!uri) return '';
+        return uri.replace(/.*[#\/]/, '');
+    }
+
+    // ══════════════════════════════════════════════════════
+    // Node Type → Style Mapping
+    // ══════════════════════════════════════════════════════
+    function getNodeStyle(typeUri) {
+        const t = shortUri(typeUri).toLowerCase();
+        if (t.includes('startevent')) return { color: '#4caf50', shape: 'ellipse', label: '●' };
+        if (t.includes('endevent')) return { color: '#f44336', shape: 'ellipse', label: '■' };
+        if (t.includes('guardrailgateway')) return { color: '#e94560', shape: 'diamond', label: '◆' };
+        if (t.includes('exclusivegateway') || t.includes('gateway')) return { color: '#ff9800', shape: 'diamond', label: '◇' };
+        if (t.includes('agentictask')) return { color: '#2196f3', shape: 'round-rectangle', label: '□' };
+        if (t.includes('task') || t.includes('servicetask')) return { color: '#2196f3', shape: 'round-rectangle', label: '□' };
+        return { color: '#9e9e9e', shape: 'rectangle', label: '?' };
+    }
+
+    // ══════════════════════════════════════════════════════
+    // Load Process Topology (TBox)
+    // ══════════════════════════════════════════════════════
+    async function loadProcessTopology() {
+        const query = `${PREFIXES}
+            SELECT ?from ?fromLabel ?fromType ?to ?toLabel ?toType ?recipe ?requiresApproval WHERE {
+                GRAPH <${DEF_GRAPH}> {
+                    ?from agentflow:nextTask ?to .
+                    ?from a ?fromType .
+                    ?to a ?toType .
+                    OPTIONAL { ?from rdfs:label ?fromLabel }
+                    OPTIONAL { ?to rdfs:label ?toLabel }
+                    OPTIONAL { ?from agentflow:recipe ?recipe }
+                    OPTIONAL { ?from agentflow:requiresApproval ?requiresApproval }
+                    FILTER (?fromType NOT IN (owl:NamedIndividual, rdfs:Resource, owl:ObjectProperty, owl:DatatypeProperty, owl:Class))
+                    FILTER (?toType NOT IN (owl:NamedIndividual, rdfs:Resource, owl:ObjectProperty, owl:DatatypeProperty, owl:Class))
+                }
+            }
+        `;
+        const data = await sparqlQuery(query);
+        
+        const nodes = new Map();
+        const edges = [];
+
+        data.results.bindings.forEach(b => {
+            const fromId = b.from.value;
+            const toId = b.to.value;
+            
+            if (!nodes.has(fromId)) {
+                const style = getNodeStyle(b.fromType.value);
+                nodes.set(fromId, {
+                    data: {
+                        id: fromId,
+                        label: b.fromLabel?.value || shortUri(fromId),
+                        type: b.fromType.value,
+                        typeName: shortUri(b.fromType.value),
+                        recipe: b.recipe?.value || '',
+                        requiresApproval: b.requiresApproval?.value || '',
+                        nodeColor: style.color,
+                        nodeShape: style.shape
+                    }
+                });
+            }
+            if (!nodes.has(toId)) {
+                const style = getNodeStyle(b.toType.value);
+                nodes.set(toId, {
+                    data: {
+                        id: toId,
+                        label: b.toLabel?.value || shortUri(toId),
+                        type: b.toType.value,
+                        typeName: shortUri(b.toType.value),
+                        nodeColor: style.color,
+                        nodeShape: style.shape
+                    }
+                });
+            }
+            edges.push({ data: { source: fromId, target: toId } });
+        });
+
+        return { nodes: Array.from(nodes.values()), edges };
+    }
+
+    // ══════════════════════════════════════════════════════
+    // Load Runtime State (ABox)
+    // ══════════════════════════════════════════════════════
+    async function loadRuntimeState() {
+        const query = `${PREFIXES}
+            SELECT ?process ?processStatus ?currentTaskInst ?currentTaskDef ?taskInstStatus WHERE {
+                GRAPH <${RT_GRAPH}> {
+                    ?process a agentflow:ProcessInstance .
+                    OPTIONAL { ?process agentflow:processStatus ?processStatus }
+                    OPTIONAL {
+                        ?process agentflow:currentTask ?currentTaskInst .
+                        ?currentTaskInst agentflow:instantiatesTask ?currentTaskDef .
+                        ?currentTaskInst agentflow:taskStatus ?taskInstStatus .
+                    }
+                }
+            }
+        `;
+        const data = await sparqlQuery(query);
+        if (data.results.bindings.length === 0) return null;
+
+        const b = data.results.bindings[0];
+        return {
+            processUri: b.process?.value,
+            processStatus: b.processStatus?.value || 'UNKNOWN',
+            currentTaskDef: b.currentTaskDef?.value || null,
+            currentTaskInstStatus: b.taskInstStatus?.value || null
+        };
+    }
+
+    // ══════════════════════════════════════════════════════
+    // Load Completed Tasks
+    // ══════════════════════════════════════════════════════
+    async function loadCompletedTasks() {
+        const query = `${PREFIXES}
+            SELECT ?taskDef ?status WHERE {
+                GRAPH <${RT_GRAPH}> {
+                    ?taskInst a agentflow:TaskInstance ;
+                              agentflow:instantiatesTask ?taskDef ;
+                              agentflow:taskStatus ?status .
+                }
+            }
+        `;
+        const data = await sparqlQuery(query);
+        const tasks = {};
+        data.results.bindings.forEach(b => {
+            tasks[b.taskDef.value] = b.status.value;
+        });
+        return tasks;
+    }
+
+    // ══════════════════════════════════════════════════════
+    // Load Process Variables
+    // ══════════════════════════════════════════════════════
+    async function loadProcessVariables() {
+        const query = `${PREFIXES}
+            SELECT ?varName ?varValue WHERE {
+                GRAPH <${RT_GRAPH}> {
+                    ?process a agentflow:ProcessInstance ;
+                             agentflow:hasVariable ?var .
+                    ?var agentflow:varName ?varName ;
+                         agentflow:varValue ?varValue .
+                }
+            } ORDER BY ?varName
+        `;
+        const data = await sparqlQuery(query);
+        return data.results.bindings.map(b => ({
+            name: b.varName.value,
+            value: b.varValue.value
+        }));
+    }
+
+    // ══════════════════════════════════════════════════════
+    // Load Ontology Classes (for ontology view)
+    // ══════════════════════════════════════════════════════
+    async function loadOntologyClasses() {
+        const query = `${PREFIXES}
+            SELECT ?class ?label ?parent WHERE {
+                GRAPH <${DEF_GRAPH}> {
+                    ?class a owl:Class .
+                    OPTIONAL { ?class rdfs:label ?label }
+                    OPTIONAL { ?class rdfs:subClassOf ?parent . ?parent a owl:Class }
+                }
+            } ORDER BY ?class
+        `;
+        const data = await sparqlQuery(query);
+        
+        const nodes = new Map();
+        const edges = [];
+
+        data.results.bindings.forEach(b => {
+            const classUri = b.class.value;
+            if (!nodes.has(classUri)) {
+                const name = shortUri(classUri);
+                let color = '#9e9e9e';
+                if (classUri.includes('agentflow')) color = '#e94560';
+                else if (classUri.includes('sBPMN')) color = '#2196f3';
+                else if (classUri.includes('cto-ontology')) color = '#ff9800';
+                
+                nodes.set(classUri, {
+                    data: {
+                        id: classUri,
+                        label: b.label?.value || name,
+                        typeName: 'owl:Class',
+                        nodeColor: color,
+                        nodeShape: 'round-rectangle'
+                    }
+                });
+            }
+            if (b.parent?.value && b.parent.value !== classUri) {
+                edges.push({ data: { source: classUri, target: b.parent.value, label: 'subClassOf' } });
+            }
+        });
+
+        return { nodes: Array.from(nodes.values()), edges };
+    }
+
+    // ══════════════════════════════════════════════════════
+    // Render Graph
+    // ══════════════════════════════════════════════════════
+    function renderGraph(elements, layout = 'dagre') {
+        document.getElementById('loadingMsg')?.remove();
+
+        if (cy) cy.destroy();
+
+        cy = cytoscape({
+            container: document.getElementById('cy'),
+            elements: [...elements.nodes, ...elements.edges],
+            layout: {
+                name: layout,
+                rankDir: 'LR',
+                nodeSep: 60,
+                rankSep: 80,
+                padding: 30
+            },
+            style: [
+                { selector: 'node', style: {
+                    'label': 'data(label)',
+                    'background-color': 'data(nodeColor)',
+                    'shape': 'data(nodeShape)',
+                    'width': 40, 'height': 40,
+                    'font-size': '10px',
+                    'color': '#e0e0e0',
+                    'text-valign': 'bottom',
+                    'text-margin-y': 8,
+                    'text-wrap': 'wrap',
+                    'text-max-width': '100px',
+                    'border-width': 0
+                }},
+                { selector: 'node.active', style: {
+                    'border-width': 4,
+                    'border-color': '#ffd700',
+                    'border-style': 'solid',
+                    'width': 50, 'height': 50
+                }},
+                { selector: 'node.completed', style: {
+                    'opacity': 0.6,
+                    'border-width': 2,
+                    'border-color': '#4caf50'
+                }},
+                { selector: 'edge', style: {
+                    'width': 2,
+                    'line-color': '#444',
+                    'target-arrow-color': '#444',
+                    'target-arrow-shape': 'triangle',
+                    'curve-style': 'bezier',
+                    'arrow-scale': 1.2
+                }},
+                { selector: 'edge[label]', style: {
+                    'label': 'data(label)',
+                    'font-size': '9px',
+                    'color': '#888',
+                    'text-rotation': 'autorotate'
+                }}
+            ]
+        });
+
+        // Click handler
+        cy.on('tap', 'node', function(evt) {
+            showNodeDetails(evt.target.data());
+        });
+
+        cy.on('tap', function(evt) {
+            if (evt.target === cy) {
+                document.getElementById('nodeDetails').innerHTML = '<h2>Node Details</h2><p style="font-size:12px;color:#888">Click a node to inspect</p>';
+            }
+        });
+    }
+
+    // ══════════════════════════════════════════════════════
+    // Update Runtime Overlay
+    // ══════════════════════════════════════════════════════
+    async function updateRuntimeState() {
+        if (!cy) return;
+
+        try {
+            const [runtime, completedTasks, variables] = await Promise.all([
+                loadRuntimeState(),
+                loadCompletedTasks(),
+                loadProcessVariables()
+            ]);
+
+            // Reset styles
+            cy.nodes().removeClass('active completed');
+
+            // Mark completed tasks
+            Object.entries(completedTasks).forEach(([defUri, status]) => {
+                const node = cy.getElementById(defUri);
+                if (node.length > 0 && status === 'COMPLETED') {
+                    node.addClass('completed');
+                }
+            });
+
+            // Mark active token
+            if (runtime?.currentTaskDef) {
+                const activeNode = cy.getElementById(runtime.currentTaskDef);
+                if (activeNode.length > 0) {
+                    activeNode.addClass('active');
+                }
+            }
+
+            // Update process status
+            const statusText = runtime ? `Process: ${runtime.processStatus}` : 'No active process';
+            document.getElementById('statusText').textContent = statusText;
+
+            // Update variables panel
+            updateVariablesPanel(variables);
+        } catch (e) {
+            console.error('Runtime update error:', e);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════
+    // UI Helpers
+    // ══════════════════════════════════════════════════════
+    function showNodeDetails(data) {
+        const details = document.getElementById('nodeDetails');
+        let html = '<h2>Node Details</h2>';
+        html += field('ID', shortUri(data.id));
+        html += field('Label', data.label);
+        html += field('Type', data.typeName);
+        if (data.recipe) html += field('Recipe', data.recipe + '.yaml');
+        if (data.requiresApproval) html += field('Requires Approval', data.requiresApproval);
+        details.innerHTML = html;
+    }
+
+    function field(label, value) {
+        return `<div class="field"><div class="field-label">${label}</div><div class="field-value">${value}</div></div>`;
+    }
+
+    function updateVariablesPanel(variables) {
+        const panel = document.getElementById('processVars');
+        if (!variables || variables.length === 0) {
+            panel.innerHTML = '<h2>Process Variables</h2><p style="font-size:12px;color:#888">No variables yet</p>';
+            return;
+        }
+        let html = '<h2>Process Variables</h2><table class="var-table"><tr><th>Name</th><th>Value</th></tr>';
+        variables.forEach(v => {
+            const shortVal = v.value.length > 50 ? v.value.substring(0, 47) + '...' : v.value;
+            html += `<tr><td>${v.name}</td><td title="${v.value.replace(/"/g, '&quot;')}">${shortVal}</td></tr>`;
+        });
+        html += '</table>';
+        panel.innerHTML = html;
+    }
+
+    // ══════════════════════════════════════════════════════
+    // Main Init & Event Handlers
+    // ══════════════════════════════════════════════════════
+    async function loadView(mode) {
+        try {
+            document.getElementById('statusText').textContent = 'Loading...';
+            let elements;
+            if (mode === 'ontology') {
+                elements = await loadOntologyClasses();
+                renderGraph(elements, 'dagre');
+            } else {
+                elements = await loadProcessTopology();
+                renderGraph(elements, 'dagre');
+                await updateRuntimeState();
+            }
+            document.getElementById('statusText').textContent = `Loaded: ${elements.nodes.length} nodes, ${elements.edges.length} edges`;
+        } catch (e) {
+            document.getElementById('loadingMsg')?.remove();
+            document.getElementById('cy').innerHTML = `<div class="error">Error: ${e.message}<br><br>Make sure Fuseki is running and data is loaded:<br><code>fuseki start && make load DEMO=sim-activation</code></div>`;
+        }
+    }
+
+    // Event handlers
+    document.getElementById('btnRefresh').addEventListener('click', () => {
+        loadView(document.getElementById('viewMode').value);
+    });
+
+    document.getElementById('btnPoll').addEventListener('click', function() {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+            this.textContent = '▶ Auto-Poll';
+            this.classList.remove('active');
+        } else {
+            pollInterval = setInterval(updateRuntimeState, 3000);
+            this.textContent = '⏸ Stop Poll';
+            this.classList.add('active');
+        }
+    });
+
+    document.getElementById('viewMode').addEventListener('change', function() {
+        loadView(this.value);
+    });
+
+    // Initial load
+    loadView('process');
+    </script>
+</body>
+</html>

@@ -2,6 +2,16 @@
 
 <!-- Append-only. Newest entries at top. -->
 
+## 2026-07-28 18:43
+- Namespace refactor: replaced example.org with real sBPMN/CTO namespace URIs
+- Deleted local ontology/sbpmn.ttl and ontology/cto.ttl — fetched from GitHub at load time
+- Moved runtime concepts (ProcessInstance, TaskInstance, etc.) to agentflow: namespace
+- Aligned class names to real sBPMN lowercase convention
+- Added test suite: test_syntax.sh, test_namespaces.sh, test_structure.sh, test_engine.sh
+- Added Makefile targets: make test, make test-fast
+- Created demo/ontology-explorer/ — Cytoscape.js process visualizer + ontology class viewer
+- Both demos pass end-to-end with refactored namespaces
+
 ## 2026-07-28 11:05
 - Phase 3 complete: documentation, walkthrough, and packaging
 - Created README.md (project overview, quick start, architecture)
