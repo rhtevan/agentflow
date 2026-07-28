@@ -4,7 +4,7 @@ Graph-driven agent orchestrator using sBPMN, OWL, and Apache Jena
 to enforce deterministic multi-step LLM workflows.
 
 Part of the **agent-x trilogy**:
-- **AgentFS** (agent-filesystem) — foundation file structures for agents
+- **[AgentFS](https://github.com/rhtevan/agentfs)** (agent-filesystem) — foundation file structures for agents
 - **AgentFLOW** (agent-flow) — deterministic workflow orchestration ← this project
 - **AgentBOX** (agent-box) — secure enterprise sandbox for agent sessions
 
