@@ -116,11 +116,11 @@ edges using Turtle-star inline annotations:
 
 ```turtle
 # Gateway condition on sequence flow edge
-ex:GW_SeverityCheck sbpmn:nextTask ex:Task_Escalate {|
-    sbpmn:varName   "severity" ;
-    sbpmn:operator  "==" ;
-    sbpmn:threshold "CRITICAL" ;
-    sbpmn:isDefault false
+ex:GW_SeverityCheck agentflow:nextTask ex:Task_Escalate {|
+    agentflow:varName   "severity" ;
+    agentflow:operator  "==" ;
+    agentflow:threshold "CRITICAL" ;
+    agentflow:isDefault false
 |} .
 ```
 

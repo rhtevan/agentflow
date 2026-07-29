@@ -61,8 +61,8 @@ to follow a complex instruction prompt.
 
 | Component | Role |
 |-----------|------|
-| **[sBPMN](https://sbpmn.github.io/2.0/index.html) Ontology** | Semantic BPMN — process classes (Task, Gateway, Event) in OWL/Turtle ([`ontology/sbpmn.ttl`](ontology/sbpmn.ttl), [reference implementation](https://github.com/sBPMN/2.0)) |
-| **[CTO](https://github.com/Point-Topic/cto-ontology) Ontology** | Common Telecommunications Ontology — network elements (HLR, nodes) ([`ontology/cto.ttl`](ontology/cto.ttl)) |
+| **[sBPMN](https://sbpmn.github.io/2.0/index.html) Ontology** | Semantic BPMN — process classes (Task, Gateway, Event) in OWL/Turtle (fetched from [GitHub](https://github.com/sBPMN/2.0) at load time) |
+| **[CTO](https://github.com/Point-Topic/cto-ontology) Ontology** | Common Telecommunications Ontology — network elements (HLR, nodes) (fetched from [GitHub](https://github.com/Point-Topic/cto-ontology) at load time) |
 | **AgentFLOW Ontology** | Agent extensions — AgenticTask, GuardrailGateway ([`ontology/agentflow.ttl`](ontology/agentflow.ttl)) |
 | **SHACL Shapes** | Pre-flight structural validation ([`ontology/shapes/`](ontology/shapes/)) |
 | **Named Graphs** | TBox/ABox separation — definitions vs runtime state ([architecture](docs/architecture.md)) |
@@ -110,7 +110,22 @@ This runs the Git Push Safety guardrail as a process graph. The LLM
 executes scan, report, and README check tasks. A GuardrailGateway
 **blocks execution** until a human approves or denies the push.
 
-### GUI Walkthrough
+### Run Demo 3: Ontology Explorer & Process Visualizer
+
+```bash
+# Load a demo into Fuseki
+make load DEMO=sim-activation
+
+# Open the visualizer in your browser
+python3 -m http.server 8080 -d demo/ontology-explorer
+# Navigate to http://localhost:8080
+```
+
+Interactive Cytoscape.js visualizer showing process topology as a
+flowchart, live token position, and ontology class hierarchies.
+See [demo/ontology-explorer/README.md](demo/ontology-explorer/README.md).
+
+### GUI Walkthrough (YASGUI)
 
 See [demo/walkthrough/README.md](demo/walkthrough/README.md) for a
 step-by-step guide using Fuseki's YASGUI web interface with pre-built
@@ -149,21 +164,28 @@ agentflow/
 │   ├── orchestrate.sh          # Main engine loop
 │   └── config.env              # Fuseki endpoint, dataset, timeouts
 ├── ontology/
-│   ├── sbpmn.ttl               # sBPMN classes & properties
-│   ├── cto.ttl                 # Telecom domain ontology
-│   ├── agentflow.ttl           # AgentFLOW extensions
+│   ├── agentflow.ttl           # AgentFLOW extensions (local)
 │   └── shapes/                 # SHACL validation constraints
+│   # sBPMN + CTO ontologies fetched from GitHub at load time
 ├── demo/
 │   ├── sim-activation/         # Demo 1: SIM Card Activation
 │   ├── git-push-safety/        # Demo 2: Git Push Safety
-│   └── walkthrough/            # GUI walkthrough + SPARQL queries
+│   ├── ontology-explorer/      # Demo 3: Cytoscape.js visualizer
+│   └── walkthrough/            # SPARQL queries for Fuseki YASGUI
+├── tests/
+│   ├── run_all.sh              # Master test runner
+│   ├── test_syntax.sh          # Turtle syntax validation
+│   ├── test_namespaces.sh      # Namespace consistency checks
+│   ├── test_structure.sh       # SPARQL structural queries
+│   └── test_engine.sh          # End-to-end demo smoke tests
 ├── scripts/
-│   ├── load_ontology.sh        # Load TBox + ABox into Fuseki
-│   └── check_prerequisites.sh  # Verify dependencies
+│   ├── load_ontology.sh        # Fetch sBPMN/CTO from GitHub + load into Fuseki
+│   ├── check_prerequisites.sh  # Verify dependencies
+│   └── cleanup.sh              # Remove runtime data
 ├── docs/
 │   ├── architecture.md
 │   └── decisions.md            # Key design decisions
-└── Makefile                    # make demo-telecom, demo-git-push, approve
+└── Makefile                    # make demo-telecom, demo-git-push, test, approve
 ```
 
 ## Key Design Decisions
