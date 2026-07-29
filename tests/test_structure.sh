@@ -93,6 +93,10 @@ echo '  Test: Ontology Structure (SPARQL)'
 echo '══════════════════════════════════════════════════════'
 echo ''
 
+# Load data before running structure tests
+echo '  [+] Loading ontology for structure tests...'
+bash "${PROJECT_DIR}/scripts/load_ontology.sh" sim-activation > /dev/null 2>&1
+
 # Use the prefixes from our ontology
 PREFIX='
 PREFIX sbpmnc:    <https://sBPMN.github.io/2.0/classes#>

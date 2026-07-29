@@ -2,6 +2,14 @@
 
 <!-- Append-only. Newest entries at top. -->
 
+## 2026-07-28 23:39
+- Completed all pending items: expected_output.txt, SHACL validation, walkthrough queries, decisions.md, MEMORY.md
+- Fixed test_structure.sh to load its own data (was failing with empty Fuseki)
+- Added post-test cleanup: temp files + ephemeral Goose recipe sessions
+- make clean now removes /tmp/agentflow_* temp files
+- Recorded v0.1.0 retrospective in MEMORY.md
+- All 4 test suites pass (27/27 assertions)
+
 ## 2026-07-28 18:43
 - Namespace refactor: replaced example.org with real sBPMN/CTO namespace URIs
 - Deleted local ontology/sbpmn.ttl and ontology/cto.ttl — fetched from GitHub at load time

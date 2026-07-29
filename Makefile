@@ -21,9 +21,10 @@ validate: ## Validate ontology syntax
 	   riot --validate "$$f" 2>&1 && echo "  ✅ $$f" || echo "  ❌ $$f"; \
 	 done
 
-clean: ## Remove runtime data from Fuseki
+clean: ## Remove runtime data from Fuseki and temp files
 	@curl -s -X DELETE "$(FUSEKI_HOST)/\$$/datasets/$(DATASET)" > /dev/null 2>&1 || true
-	@echo 'Dataset cleared'
+	@rm -f /tmp/agentflow_*.log /tmp/agentflow_*.json
+	@echo '✓ Dataset cleared, temp files removed'
 
 demo-telecom: ## Run SIM Activation demo
 	@$(MAKE) clean

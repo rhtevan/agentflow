@@ -15,6 +15,10 @@ fi
 PASS=0
 FAIL=0
 
+# Record start time for post-test Goose session cleanup
+TEST_START=$(date -u +"%Y-%m-%d %H:%M:%S")
+GOOSE_DB="${HOME}/.local/share/goose/sessions/sessions.db"
+
 sparql_value() {
     local query="$1"
     curl -s -X POST "${QUERY_URL}" \
@@ -182,6 +186,26 @@ SELECT ?val WHERE {
   }
 }")
 assert_eq 'E-06' 'Demo 2 override was recorded' 'true' "$OVERRIDE"
+
+# Cleanup temp files
+rm -f /tmp/agentflow_test_demo1.log /tmp/agentflow_test_demo2.log
+
+# Cleanup Goose recipe sessions created during this test run
+if [[ -f "$GOOSE_DB" ]] && command -v sqlite3 &>/dev/null; then
+    CLEANED=$(sqlite3 "$GOOSE_DB" "
+        DELETE FROM messages WHERE session_id IN (
+            SELECT id FROM sessions
+            WHERE recipe_json IS NOT NULL AND created_at >= '$TEST_START'
+        );
+        DELETE FROM usage_ledger WHERE session_id IN (
+            SELECT id FROM sessions
+            WHERE recipe_json IS NOT NULL AND created_at >= '$TEST_START'
+        );
+        DELETE FROM sessions
+        WHERE recipe_json IS NOT NULL AND created_at >= '$TEST_START';
+        SELECT changes();")
+    [[ "$CLEANED" -gt 0 ]] 2>/dev/null && echo "  [+] Cleaned $CLEANED ephemeral Goose recipe sessions"
+fi
 
 echo ''
 echo '══════════════════════════════════════════════════════'
