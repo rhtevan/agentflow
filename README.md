@@ -23,6 +23,10 @@ This has three structural weaknesses:
 
 ## The Insight
 
+As conversation history grows, instruction adherence declines. Guardrails
+defined early in a prompt are forgotten or deprioritized as the context
+window fills.
+
 Manufacturing solved quality and consistency not by hiring smarter workers,
 but by designing a better pipeline. AgentFLOW applies the same principle:
 
