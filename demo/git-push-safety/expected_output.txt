@@ -1,0 +1,80 @@
+══════════════════════════════════════════════════════
+  AgentFLOW Orchestration Engine
+══════════════════════════════════════════════════════
+
+  [→] startEvent: Git Push Initiated
+  [✓] Advancing token
+
+  [■] AgenticTask: Stage Changes
+  [+] Recipe: git_stage.yaml
+  [+] Params: {"remote":"origin","work_dir":".","branch":"main"}
+  [+] Executing: goose run --recipe demo/git-push-safety/recipes/git_stage.yaml
+  [✓] Recipe execution succeeded
+  [+] Output: {"files_staged":3,"diff_lines":47,"files":["engine/orchestrate.sh","ontology/sbpmn.ttl","README.md"]}
+  [✓] Output merged to ABox
+
+  [■] AgenticTask: Scan for Secrets & PII
+  [+] Recipe: git_scan_secrets.yaml
+  [+] Params: {"diff_lines":"47","files_staged":"3","remote":"origin","work_dir":".","files":"[\"engine/orchestrate.sh\",\"ontology/sbpmn.ttl\",\"README.md\"]","branch":"main"}
+  [+] Executing: goose run --recipe demo/git-push-safety/recipes/git_scan_secrets.yaml
+  [✓] Recipe execution succeeded
+  [+] Output: {"findings_count":1,"findings":[{"category":"Hardcoded Path","file":"engine/orchestrate.sh","line":42,"match":"/home/user/.agents/skills/","severity":"WARNING"}]}
+  [✓] Output merged to ABox
+
+  [■] AgenticTask: Generate Pre-Push Security Report
+  [+] Recipe: git_security_report.yaml
+  [+] Params: {"findings":"[{\"category\":\"Hardcoded Path\",\"file\":\"engine/orchestrate.sh\",\"line\":42,\"match\":\"/home/user/.agents/skills/\",\"severity\":\"WARNING\"}]","diff_lines":"47","files_staged":"3","remote":"origin","work_dir":".","files":"[\"engine/orchestrate.sh\",\"ontology/sbpmn.ttl\",\"README.md\"]","findings_count":"1","branch":"main"}
+  [+] Executing: goose run --recipe demo/git-push-safety/recipes/git_security_report.yaml
+  [✓] Recipe execution succeeded
+  [+] Output: {"report":"Secrets/API Keys: CLEAN | Hardcoded Paths: WARNING (1 found) | PII: CLEAN | IP Addresses: CLEAN","verdict":"1 finding requires review","clean":false}
+  [✓] Output merged to ABox
+
+  [■] AgenticTask: Check README Staleness
+  [+] Recipe: git_readme_check.yaml
+  [+] Params: {"findings":"[{\"category\":\"Hardcoded Path\",\"file\":\"engine/orchestrate.sh\",\"line\":42,\"match\":\"/home/user/.agents/skills/\",\"severity\":\"WARNING\"}]","diff_lines":"47","files_staged":"3","clean":"false","verdict":"1 finding requires review","report":"Secrets/API Keys: CLEAN | Hardcoded Paths: WARNING (1 found) | PII: CLEAN | IP Addresses: CLEAN","remote":"origin","work_dir":".","files":"[\"engine/orchestrate.sh\",\"ontology/sbpmn.ttl\",\"README.md\"]","findings_count":"1","branch":"main"}
+  [+] Executing: goose run --recipe demo/git-push-safety/recipes/git_readme_check.yaml
+  [✓] Recipe execution succeeded
+  [+] Output: 
+
+  [◆] GuardrailGateway: Human Push Approval
+
+  ┌─────────────────────────────────────────────────────┐
+  │  ⚠️  APPROVAL REQUIRED                              │
+  │                                                     │
+  │  To approve:                                        │
+  │  make approve PROCESS=ProcInst_GitPush_001     │
+  │               VALUE=APPROVED                        │
+  │                                                     │
+  │  To deny:                                           │
+  │  make approve PROCESS=ProcInst_GitPush_001     │
+  │               VALUE=DENIED                          │
+  │                                                     │
+  │  Timeout: 3600s (auto-DENIED)│
+  └─────────────────────────────────────────────────────┘
+
+  [✓] Approval variable 'approval_status' = 'APPROVED'
+  [+] Evaluating: approval_status == APPROVED (actual: APPROVED)
+  [✓] Condition matched → routing to: Task_ExecutePush
+
+  [■] AgenticTask: Execute Git Push
+  [+] Recipe: git_push.yaml
+  [+] Params: {"findings":"[{\"category\":\"Hardcoded Path\",\"file\":\"engine/orchestrate.sh\",\"line\":42,\"match\":\"/home/user/.agents/skills/\",\"severity\":\"WARNING\"}]","diff_lines":"47","files_staged":"3","clean":"false","verdict":"1 finding requires review","approval_status":"APPROVED","report":"Secrets/API Keys: CLEAN | Hardcoded Paths: WARNING (1 found) | PII: CLEAN | IP Addresses: CLEAN","remote":"origin","work_dir":".","files":"[\"engine/orchestrate.sh\",\"ontology/sbpmn.ttl\",\"README.md\"]","findings_count":"1","branch":"main"}
+  [+] Executing: goose run --recipe demo/git-push-safety/recipes/git_push.yaml
+  [✓] Recipe execution succeeded
+  [+] Output: {"push_result":"SUCCESS","remote":"origin/main","commits_pushed":1}
+  [✓] Output merged to ABox
+
+  [■] AgenticTask: Log Push Result
+  [+] Recipe: git_log_result.yaml
+  [+] Params: {"findings":"[{\"category\":\"Hardcoded Path\",\"file\":\"engine/orchestrate.sh\",\"line\":42,\"match\":\"/home/user/.agents/skills/\",\"severity\":\"WARNING\"}]","diff_lines":"47","files_staged":"3","commits_pushed":"1","clean":"false","verdict":"1 finding requires review","approval_status":"APPROVED","report":"Secrets/API Keys: CLEAN | Hardcoded Paths: WARNING (1 found) | PII: CLEAN | IP Addresses: CLEAN","remote":"origin","work_dir":".","files":"[\"engine/orchestrate.sh\",\"ontology/sbpmn.ttl\",\"README.md\"]","findings_count":"1","branch":"main","push_result":"SUCCESS"}
+  [+] Executing: goose run --recipe demo/git-push-safety/recipes/git_log_result.yaml
+  [✓] Recipe execution succeeded
+  [+] Output: {"logged":true,"override_recorded":true,"log_entry":"[OVERRIDE] Push approved with findings. Verdict: 1 finding requires review"}
+  [✓] Output merged to ABox
+
+  [⏹] endEvent: Push Completed Successfully
+  [✓] Process COMPLETED
+
+══════════════════════════════════════════════════════
+  Engine Stopped
+══════════════════════════════════════════════════════

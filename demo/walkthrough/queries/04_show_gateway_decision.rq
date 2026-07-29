@@ -4,6 +4,7 @@
 
 PREFIX sbpmn:  <https://sBPMN.github.io/2.0/properties#>
 PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX agentflow: <http://example.org/ontology/agentflow#>
 
 SELECT ?fromInst ?fromLabel ?toInst ?toLabel WHERE {
   GRAPH <http://example.org/graphs/runtime> {

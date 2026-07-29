@@ -145,3 +145,23 @@ subclasses or a separate type?
 - Self-evaluation mode behaves like XOR; approval mode adds polling
 - Engine implementation difference is one `if` statement
 - Semantic classification enables SPARQL discovery of all guardrail points
+
+---
+
+## 10. Use Standard Ontologies by Reference
+
+**Context:** The project initially defined custom `sbpmn.ttl` and `cto.ttl`
+files with invented `http://example.org/` namespaces. The real sBPMN ontology
+(2,378 lines, 197 classes) and CTO Core ontology (330 lines, 28 classes)
+exist as open-source projects on GitHub.
+
+**Decision:** Do not bundle sBPMN or CTO ontology files in the repository.
+Fetch them from their authoritative GitHub repositories at load time.
+
+**Rationale:**
+- No third-party files bundled — reduces maintenance burden
+- Correct namespace URIs everywhere (`https://sBPMN.github.io/2.0/classes#`,
+  `https://github.com/Point-Topic/cto-ontology/`)
+- `agentflow.ttl` properly extends the real classes via `rdfs:subClassOf`
+- SPARQL pattern matching works by IRI equality — full reasoning not required
+- Requires internet access at `make load` time (acceptable for experiment)

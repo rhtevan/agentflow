@@ -57,7 +57,7 @@ ex:RunningProcessShape a sh:NodeShape ;
     sh:target [
         a sh:SPARQLTarget ;
         sh:select """
-            PREFIX sbpmn: <https://sBPMN.github.io/2.0/properties#>
+            PREFIX agentflow: <http://example.org/ontology/agentflow#>
             SELECT ?this WHERE {
                 ?this a agentflow:ProcessInstance ;
                       agentflow:processStatus "RUNNING" .

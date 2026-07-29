@@ -1,0 +1,41 @@
+══════════════════════════════════════════════════════
+  AgentFLOW Orchestration Engine
+══════════════════════════════════════════════════════
+
+  [→] startEvent: SIM Activation Initiated
+  [✓] Advancing token
+
+  [■] AgenticTask: Classify Request
+  [+] Recipe: classify_request.yaml
+  [+] Params: {"request_text":"Enterprise customer requests SIM activation for new executive device. Priority account with SLA guarantees. Requires immediate provisioning on Toronto HLR cluster.","imsi":"302720123456789","msisdn":"+14165550199"}
+  [+] Executing: goose run --recipe demo/sim-activation/recipes/classify_request.yaml
+  [✓] Recipe execution succeeded
+  [+] Output: {"severity":"CRITICAL","reason":"Enterprise priority account with SLA guarantees requesting executive device activation with immediate provisioning requirement"}
+  [✓] Output merged to ABox
+
+  [◆] ExclusiveGateway: Severity Check
+  [+] Evaluating: severity == CRITICAL (actual: CRITICAL)
+  [✓] Condition matched → routing to: Task_Escalate
+
+  [■] AgenticTask: Escalate Issue
+  [+] Recipe: escalate_issue.yaml
+  [+] Params: {"request_text":"Enterprise customer requests SIM activation for new executive device. Priority account with SLA guarantees. Requires immediate provisioning on Toronto HLR cluster.","severity":"CRITICAL","imsi":"302720123456789","msisdn":"+14165550199","reason":"Enterprise priority account with SLA guarantees requesting executive device activation with immediate provisioning requirement"}
+  [+] Executing: goose run --recipe demo/sim-activation/recipes/escalate_issue.yaml
+  [✓] Recipe execution succeeded
+  [+] Output: {"escalation_ticket_id":"ESC-20260728-001","escalation_priority":"P1","assigned_team":"Enterprise SLA Operations","summary":"CRITICAL SIM activation escalation for enterprise priority account +14165550199 (IMSI 302720123456789) requiring immediate executive device provisioning under SLA guarantees"}
+  [✓] Output merged to ABox
+
+  [■] AgenticTask: Log Completion
+  [+] Recipe: log_completion.yaml
+  [+] Params: {"assigned_team":"Enterprise SLA Operations","request_text":"Enterprise customer requests SIM activation for new executive device. Priority account with SLA guarantees. Requires immediate provisioning on Toronto HLR cluster.","escalation_priority":"P1","severity":"CRITICAL","summary":"CRITICAL SIM activation escalation for enterprise priority account +14165550199 (IMSI 302720123456789) requiring immediate executive device provisioning under SLA guarantees","imsi":"302720123456789","msisdn":"+14165550199","reason":"Enterprise priority account with SLA guarantees requesting executive device activation with immediate provisioning requirement","escalation_ticket_id":"ESC-20260728-001"}
+  [+] Executing: goose run --recipe demo/sim-activation/recipes/log_completion.yaml
+  [✓] Recipe execution succeeded
+  [+] Output: {"audit_record":"SIM activation audit for MSISDN +14165550199 (IMSI 302720123456789). Severity: CRITICAL. Reason: Enterprise priority account with SLA guarantees requesting executive device activation with immediate provisioning requirement. Audit generated 2026-07-28T22:02:00-04:00.","completion_status":"SUCCESS","timestamp":"2026-07-28T14:30:00Z"}
+  [✓] Output merged to ABox
+
+  [⏹] endEvent: SIM Activation Completed
+  [✓] Process COMPLETED
+
+══════════════════════════════════════════════════════
+  Engine Stopped
+══════════════════════════════════════════════════════

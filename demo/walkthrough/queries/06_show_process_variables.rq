@@ -3,6 +3,7 @@
 # Run after each task to see how the ABox state grows.
 
 PREFIX sbpmn: <https://sBPMN.github.io/2.0/properties#>
+PREFIX agentflow: <http://example.org/ontology/agentflow#>
 
 SELECT ?process ?varName ?varValue WHERE {
   GRAPH <http://example.org/graphs/runtime> {
