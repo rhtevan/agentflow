@@ -2,6 +2,11 @@
 
 <!-- Append-only. Newest entries at top. -->
 
+## 2026-09-08 09:15
+- Synced AGENTS.md template v3.7 → v5.5.0 (project scope)
+
+- Created AGENTS.md at project root (scope: project).
+
 ## 2026-07-28 23:39
 - Completed all pending items: expected_output.txt, SHACL validation, walkthrough queries, decisions.md, MEMORY.md
 - Fixed test_structure.sh to load its own data (was failing with empty Fuseki)
