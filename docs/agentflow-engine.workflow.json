@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "AgentFLOW Engine Loop",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "main-loop", "label": "Main loop", "focus": ["poll", "validate", "execute", "advance"], "note": "Poll → validate → execute → advance. Loops until EndEvent." },
+      { "id": "gateway-path", "label": "Gateway routing", "focus": ["execute", "approval", "advance"], "note": "GuardrailGateway blocks execution until human injects approval into ABox." }
+    ]
+  },
+  "lanes": [
+    { "id": "engine", "label": "Orchestration Engine" },
+    { "id": "human", "label": "Human Operator", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "poll-phase", "label": "Poll + Validate", "fromCol": 0, "toCol": 1, "variant": "emphasis" },
+    { "id": "exec-phase", "label": "Execute", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "advance-phase", "label": "Advance", "fromCol": 4, "toCol": 5 }
+  ],
+  "mainPath": ["poll", "validate", "execute", "advance"],
+  "nodes": [
+    { "id": "poll", "lane": "engine", "col": 0, "type": "database", "label": "Poll Token", "sublabel": "SPARQL SELECT" },
+    { "id": "validate", "lane": "engine", "col": 1, "type": "security", "label": "SHACL Validate", "sublabel": "Pre-flight" },
+    { "id": "execute", "lane": "engine", "col": 3, "type": "backend", "label": "Execute Node", "sublabel": "Task or Gateway", "tag": "Fresh context" },
+    { "id": "approval", "lane": "human", "col": 3, "type": "security", "label": "Approval Gate", "sublabel": "Block + poll", "tag": "Guardrail" },
+    { "id": "advance", "lane": "engine", "col": 5, "type": "database", "label": "Advance Token", "sublabel": "SPARQL UPDATE" }
+  ],
+  "edges": [
+    { "from": "poll", "to": "validate", "variant": "emphasis" },
+    { "from": "validate", "to": "execute", "variant": "emphasis" },
+    { "from": "execute", "to": "approval", "label": "needs approval", "variant": "security", "route": "drop", "fromSide": "bottom", "toSide": "top", "labelDy": 11 },
+    { "from": "execute", "to": "advance" },
+    { "from": "approval", "to": "advance", "label": "APPROVED", "variant": "emphasis", "route": "bottom-channel", "fromSide": "bottom", "toSide": "bottom" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Engine Loop", "items": ["Stateless Bash polls Fuseki for active tokens", "SHACL validates graph structure before execution", "After advancing, the engine loops back to Poll"] },
+    { "dot": "emerald", "title": "Task Execution", "items": ["AgenticTask: Goose CLI runs recipe in fresh context", "ExclusiveGateway: SPARQL evaluates XOR conditions", "Output stored on TaskInstance in ABox"] },
+    { "dot": "rose", "title": "Gateway Enforcement", "items": ["GuardrailGateway blocks until human approval", "APPROVED advances the token; DENIED halts the process", "Graph edges are law — not suggestions"] }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AgentFLOW Architecture",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "engine-loop", "label": "Orchestration loop", "focus": ["engine", "fuseki-tbox", "fuseki-abox", "shacl"], "note": "Poll → validate → execute → advance. The stateless Bash engine drives the process graph." },
+      { "id": "task-execution", "label": "Task execution", "focus": ["engine", "goose", "recipes"], "note": "Each task runs in a fresh Goose CLI context — the Ralph Loop pattern." },
+      { "id": "ontology-stack", "label": "Ontology stack", "focus": ["sbpmn", "cto", "agentflow-onto", "fuseki-tbox"], "note": "sBPMN + CTO fetched from GitHub at load time; AgentFLOW extensions are local." }
+    ]
+  },
+  "components": [
+    { "id": "engine", "type": "backend", "label": "Orchestration Engine", "sublabel": "Bash + curl + jq", "pos": [420, 280], "size": [160, 64], "tag": "Stateless" },
+    { "id": "fuseki-tbox", "type": "database", "label": "TBox", "sublabel": "Definitions (read-only)", "pos": [700, 180], "size": [140, 56] },
+    { "id": "fuseki-abox", "type": "database", "label": "ABox", "sublabel": "Runtime state (read/write)", "pos": [700, 340], "size": [140, 56] },
+    { "id": "shacl", "type": "security", "label": "SHACL Validator", "sublabel": "Pre-flight checks", "pos": [420, 130], "size": [160, 56] },
+    { "id": "goose", "type": "backend", "label": "Goose CLI", "sublabel": "Fresh context per task", "pos": [130, 280], "size": [150, 64], "tag": "Ralph Loop" },
+    { "id": "recipes", "type": "cloud", "label": "Recipes", "sublabel": "YAML task definitions", "pos": [130, 130], "size": [150, 56] },
+    { "id": "sbpmn", "type": "external", "label": "sBPMN Ontology", "sublabel": "github.com/sBPMN/2.0", "pos": [920, 100], "size": [150, 52] },
+    { "id": "cto", "type": "external", "label": "CTO Ontology", "sublabel": "Point-Topic/cto-ontology", "pos": [920, 210], "size": [150, 52] },
+    { "id": "agentflow-onto", "type": "cloud", "label": "AgentFLOW Ontology", "sublabel": "agentflow.ttl (local)", "pos": [920, 320], "size": [150, 56] },
+    { "id": "gateway", "type": "security", "label": "Guardrail Gateway", "sublabel": "Human approval gate", "pos": [420, 430], "size": [160, 56] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Apache Jena Fuseki", "wraps": ["fuseki-tbox", "fuseki-abox"] },
+    { "kind": "region", "label": "Ontology Sources", "wraps": ["sbpmn", "cto", "agentflow-onto"] }
+  ],
+  "connections": [
+    { "id": "engine-query", "from": "engine", "to": "fuseki-tbox", "label": "SPARQL SELECT", "fromSide": "right", "toSide": "left" },
+    { "id": "engine-update", "from": "engine", "to": "fuseki-abox", "label": "SPARQL UPDATE", "variant": "emphasis", "fromSide": "right", "toSide": "left" },
+    { "id": "engine-validate", "from": "engine", "to": "shacl", "label": "validate", "fromSide": "top", "toSide": "bottom" },
+    { "id": "engine-execute", "from": "engine", "to": "goose", "label": "goose run --recipe", "variant": "emphasis", "fromSide": "left", "toSide": "right" },
+    { "id": "goose-recipe", "from": "goose", "to": "recipes", "label": "load", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
+    { "id": "engine-gateway", "from": "engine", "to": "gateway", "label": "block / approve", "variant": "security", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "onto-tbox-sbpmn", "from": "sbpmn", "to": "fuseki-tbox", "label": "fetch at load", "variant": "dashed", "fromSide": "left", "toSide": "right" },
+    { "id": "onto-tbox-cto", "from": "cto", "to": "fuseki-tbox", "variant": "dashed", "fromSide": "left", "toSide": "right" },
+    { "id": "onto-tbox-af", "from": "agentflow-onto", "to": "fuseki-tbox", "variant": "dashed", "fromSide": "left", "toSide": "right" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Orchestration", "items": ["Stateless Bash engine polls Fuseki for active tokens", "SHACL validates structure before each task executes", "Guardrail Gateways block until human approval"] },
+    { "dot": "emerald", "title": "Task Execution", "items": ["Each task runs via Goose CLI in a fresh context", "Ralph Loop pattern prevents context degradation", "YAML recipes define task instructions"] },
+    { "dot": "violet", "title": "Knowledge Graph", "items": ["TBox holds read-only process definitions and ontology", "ABox holds mutable runtime state and audit trail", "sBPMN + CTO fetched from GitHub; AgentFLOW extensions local"] }
+  ]
+}

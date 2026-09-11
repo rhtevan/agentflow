@@ -2,6 +2,14 @@
 
 <!-- Append-only. Newest entries at top. -->
 
+## 2026-09-11 11:51
+- Created docs/agentflow-engine.workflow.json — Archify workflow diagram spec (5 nodes, 2 lanes, 2 guided views)
+- Created docs/agentflow-engine.workflow.html — interactive standalone HTML, showcase-validated
+
+## 2026-09-11 11:45
+- Created docs/agentflow.architecture.json — Archify architecture diagram spec (10 components, 2 boundaries, 3 guided views)
+- Created docs/agentflow.architecture.html — interactive standalone HTML, showcase-validated, light/dark themes
+
 ## 2026-09-11 11:37
 - Added assets/css/style.scss — Cayman theme SCSS override matching agentfs/agentbox
 - Added _config.yml — Jekyll Cayman theme, title, description, excludes .agents/ and AGENTS.md
