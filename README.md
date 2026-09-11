@@ -6,7 +6,7 @@ to enforce deterministic multi-step LLM workflows.
 Part of the **agent-x trilogy**:
 - **[AgentFS](https://github.com/rhtevan/agentfs)** (agent-filesystem) — foundation file structures for agents
 - **AgentFLOW** (agent-flow) — deterministic workflow orchestration ← this project
-- **AgentBOX** (agent-box) — secure enterprise sandbox for agent sessions
+- **[AgentBOX](https://github.com/rhtevan/agentbox)** (agent-box) — secure enterprise sandbox for agent sessions
 
 ## The Problem
 

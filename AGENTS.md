@@ -1,4 +1,4 @@
-<!-- agentfs-template-version: 5.5.0 agentfs-scope: project -->
+<!-- agentfs-template-version: 5.9.0 agentfs-scope: project -->
 # AGENTS.md — Workspace Entry Point
 
 ## Quick Orientation
@@ -77,12 +77,14 @@ scripts live at `~/.agents/skills/agentfs-setup/scripts/`.
 | 10 | Event | Before destructive op (delete, rename, or edit ≥3 files under `.agents/`) | `~/.agents/skills/agentfs-setup/scripts/checkpoint.sh create <files>` → execute → `checkpoint.sh clear`. |
 | 11 | Event | Creating a skill | Default to USER `~/.agents/skills/`. PROJECT only when user explicitly says "project skill" / "for this project" / "local skill". |
 | 12 | Event | Writing to `memories/` | PROJECT scope only. Experiences → `MEMORY.md`. Rules → propose `AGENTS.md` guardrail. Preferences → `USER.md`. Mature patterns → graduate to OKF bundle under `~/.agents/knowledge/`. (Rule 13 also fires — this rule is routing, Rule 13 is mechanical.) |
-| | | **After writing `.agents/`** | |
-| 13 | Event | Any write/edit under `.agents/` or `~/.agents/` completed | Run ALL: ① `~/.agents/skills/agentfs-setup/scripts/merge-log-entry.sh <path-to-log.md> "<msg>"` for each touched scope (e.g., `~/.agents/log.md` or `./.agents/log.md`) ② `~/.agents/skills/agentfs-setup/scripts/merge-changelog-entry.sh <path-to-CHANGELOG.md> "<version>" "<desc>"` + version bump for modified skills ③ `~/.agents/skills/agentfs-setup/scripts/post-edit.sh` runs clean ④ All markdown links resolve. Details: `load_skill(name: "agentfs-setup/references/filesystem-integrity.md")` |
+| | | **Before responding** | |
+| 13 | Event | Before sending any response | If any write/edit touched `.agents/` or `~/.agents/` this turn: `bash ~/.agents/skills/agentfs-setup/scripts/post-write.sh <file> "<description>" [--version <ver>]` for each modified file (skip `log.md`, `CHANGELOG.md`, auto-generated `index.md`). Do not respond until complete. |
 | | | **Always** | |
 | 14 | Always | Every response | No validation phrases ("Great question", "Absolutely"). Lead with substance. Name ≥1 risk when evaluating a plan or design. |
 | 15 | Always | Every response | No position reversal without new information or logical argument. When reversing, state what changed and previous position. When request conflicts with a rule, quote it, explain, ask for confirmation. Log overrides with `[OVERRIDE]`. |
 | 16 | Always | Every response | Session canary name (random, ephemeral). Emit turn 1. ~1-in-5 turns: emit + self-check. Never persist to files. |
+| 17 | Always | Every response | **No action on assumed inputs.** When a request requires information the user did not provide and no authoritative source is available: ① State what is missing and why. ② Ask explicitly. ③ Do not call tools, APIs, or produce output that depends on the missing value. When confidence in a claim or result is low, flag it at the top, not buried in a footnote. |
+| 18 | Always | Before any multi-step task | **Pre-flight checklist.** Before executing a multi-step change: ① Write an internal action plan listing all steps including process obligations (Rule 13 post-write, changelogs, version bumps, index regen). ② Review the plan against Rules 13–17 — add any missing obligations. ③ Execute steps in planned order. ④ Do not skip ahead or respond before completing all planned steps. This combats multi-turn discipline decay where process obligations are dropped under cognitive load. |
 
 <!-- PROJECT-OWNED sections below. Everything above is template-owned
      and will be overwritten by agentfs-setup --sync. -->

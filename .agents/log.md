@@ -2,6 +2,11 @@
 
 <!-- Append-only. Newest entries at top. -->
 
+## 2026-09-11 11:15
+- Synced AGENTS.md template v5.5.0 → v5.9.0 (project scope)
+
+- Created AGENTS.md at project root (scope: project).
+
 ## 2026-09-08 09:15
 - Synced AGENTS.md template v3.7 → v5.5.0 (project scope)
 
