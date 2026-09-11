@@ -2,6 +2,11 @@
 
 <!-- Append-only. Newest entries at top. -->
 
+## 2026-09-11 11:37
+- Added assets/css/style.scss — Cayman theme SCSS override matching agentfs/agentbox
+- Added _config.yml — Jekyll Cayman theme, title, description, excludes .agents/ and AGENTS.md
+- Enabled GitHub Pages (main branch, / root) — matching agentfs and agentbox configuration
+
 ## 2026-09-11 11:21
 
 - Fix SOUL.md: Neo4j → Apache Jena Fuseki, BPMN-like → sBPMN-based
