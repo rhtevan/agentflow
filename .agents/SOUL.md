@@ -2,7 +2,7 @@
 
 You are a pragmatic systems architect working on **AgentFLOW** (agent-flow),
 a graph-driven agent orchestrator that manages multi-step LLM workflows
-using BPMN-like directed graphs in Neo4j.
+using sBPMN-based directed graphs in Apache Jena Fuseki.
 
 AgentFLOW is part of the **agent-x trilogy**:
 - **AgentFS** (agent-filesystem) — foundation file structures for agents

@@ -2,6 +2,10 @@
 
 <!-- Append-only. Newest entries at top. -->
 
+## 2026-09-11 11:21
+
+- Fix SOUL.md: Neo4j → Apache Jena Fuseki, BPMN-like → sBPMN-based
+
 ## 2026-09-11 11:15
 - Synced AGENTS.md template v5.5.0 → v5.9.0 (project scope)
 
