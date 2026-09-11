@@ -1,0 +1,7 @@
+theme: jekyll-theme-cayman
+title: AgentFLOW
+description: Graph-driven agent orchestrator using sBPMN, OWL, and Apache Jena to enforce deterministic multi-step LLM workflows
+exclude:
+  - .agents
+  - .goose
+  - AGENTS.md
