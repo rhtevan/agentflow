@@ -2,6 +2,9 @@
 
 <!-- Append-only. Newest entries at top. -->
 
+## 2026-09-11 12:14
+- Updated README.md — added interactive diagram links (Pages URLs) in Architecture section
+
 ## 2026-09-11 11:51
 - Created docs/agentflow-engine.workflow.json — Archify workflow diagram spec (5 nodes, 2 lanes, 2 guided views)
 - Created docs/agentflow-engine.workflow.html — interactive standalone HTML, showcase-validated

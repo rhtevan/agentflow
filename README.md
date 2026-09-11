@@ -61,6 +61,10 @@ to follow a complex instruction prompt.
 └─────────────────────────────────────────────────────┘
 ```
 
+> 📐 **Interactive diagrams:**
+> [System Architecture](https://rhtevan.github.io/agentflow/docs/agentflow.architecture.html) ·
+> [Engine Loop](https://rhtevan.github.io/agentflow/docs/agentflow-engine.workflow.html)
+
 ### Key Components
 
 | Component | Role |
